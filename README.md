@@ -7,7 +7,7 @@
 ## Config example
 
 ```xml
-<?xml version="1.0" encoding="Windows-1251" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <NotepadPlus>
   <linter extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\jscs.cmd --reporter=checkstyle"/>
   <linter extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\jshint.cmd --reporter=checkstyle"/>
