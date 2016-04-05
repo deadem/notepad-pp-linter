@@ -61,7 +61,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
                     error.m_column = _wtoi(value.bstrVal);
 
                     element->getAttribute(L"message", &value);
-                    error.m_message = Encoding::toUTF(value.bstrVal);
+                    error.m_message = value.bstrVal;
 
                     errors.push_back(error);
                   }

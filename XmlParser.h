@@ -10,7 +10,7 @@ public:
   {
     int m_line;
     int m_column;
-    std::string m_message;
+    std::wstring m_message;
   };
   struct Linter {
     std::wstring m_extension;
