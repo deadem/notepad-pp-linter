@@ -76,21 +76,15 @@ std::string File::exec(const std::wstring &directory, std::wstring commandLine, 
   return result;
 }
 
-std::wstring File::write(const std::string &data)
+std::wstring File::write(const std::wstring &directory, const std::string &data)
 {
   if (data.empty())
   {
     return L"";
   }
-  TCHAR path[MAX_PATH] = { 0 };
   TCHAR filename[MAX_PATH] = { 0 };
-  DWORD retVal = GetTempPath(MAX_PATH, path);
-  if (retVal > MAX_PATH || retVal == 0)
-  {
-    return L"";
-  }
 
-  retVal = GetTempFileName(path, L"deadem_", 0, filename);
+  DWORD retVal = GetTempFileName(directory.c_str(), L"deadem", 0, filename);
   if (retVal == 0)
   {
     return L"";

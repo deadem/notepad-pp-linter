@@ -20,6 +20,29 @@ std::vector<XmlParser::Error> errors;
 std::map<int, std::wstring> errorText;
 std::vector<XmlParser::Linter> linters;
 
+
+struct FileGuard
+{
+  FileGuard() {};
+  
+  void file(const std::wstring file)
+  {
+    clear();
+    m_file = file;
+  }
+  void clear()
+  {
+    if (!m_file.empty())
+    {
+      _wunlink(m_file.c_str());
+      m_file.clear();
+    }
+  }
+  ~FileGuard() { clear(); }
+
+  std::wstring m_file;
+} guard;
+
 void initLinters()
 {
   linters = XmlParser::getLinters(getIniFileName());
@@ -60,7 +83,8 @@ unsigned int __stdcall AsyncCheck(void *)
 
   if (!commands.empty())
   {
-    std::wstring file = File::write(getDocumentText());
+    std::wstring file = File::write(directory, getDocumentText());
+    guard.file(file);
     for each (const std::wstring &command in commands)
     {
       //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
@@ -68,7 +92,7 @@ unsigned int __stdcall AsyncCheck(void *)
       std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
       errors.insert(errors.end(), parseError.begin(), parseError.end());
     }
-    _wunlink(file.c_str());
+    guard.clear();
   }
 
   return 0;
