@@ -43,11 +43,6 @@ struct FileGuard
   std::wstring m_file;
 } guard;
 
-void initLinters()
-{
-  linters = XmlParser::getLinters(getIniFileName());
-}
-
 void ClearErrors()
 {
   LRESULT length = SendEditor(SCI_GETLENGTH);
@@ -62,6 +57,37 @@ std::wstring GetFilePart(unsigned int part)
   std::wstring text(buff);
   delete[] buff;
   return text;
+}
+
+void showTooltip(std::wstring message = std::wstring())
+{
+	int  position = SendEditor(SCI_GETCURRENTPOS);
+
+	HWND main = GetParent(getScintillaWindow());
+	HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
+
+	std::map<int, std::wstring>::const_iterator error = errorText.find(position);
+	if (error != errorText.end())
+	{
+		SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
+		//OutputDebugString(error->second.c_str());
+	}
+	else
+	{
+		wchar_t title[256] = { 0 };
+		SendMessage(childHandle, WM_GETTEXT, sizeof(title) / sizeof(title[0]) - 1, reinterpret_cast<LPARAM>(title));
+
+		std::wstring str(title);
+		if (message.empty() && str.find(L" - ") == 0)
+		{
+			message = L" - ";
+		}
+
+		if (!message.empty())
+		{
+			SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(message.c_str()));
+		}
+	}
 }
 
 unsigned int __stdcall AsyncCheck(void *)
@@ -88,9 +114,17 @@ unsigned int __stdcall AsyncCheck(void *)
     for each (const std::wstring &command in commands)
     {
       //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-      std::string xml = File::exec(directory, command, file);
-      std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-      errors.insert(errors.end(), parseError.begin(), parseError.end());
+		try
+		{
+			std::string xml = File::exec(directory, command, file);
+			std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+			errors.insert(errors.end(), parseError.begin(), parseError.end());
+		}
+		catch (Linter::Exception &e)
+		{
+			std::string str(e.what());
+			showTooltip(std::wstring(str.begin(), str.end()));
+		}
     }
     guard.clear();
   }
@@ -142,30 +176,13 @@ void Check()
   }
 }
 
-void showTooltip()
+void initLinters()
 {
-  int  position =  SendEditor(SCI_GETCURRENTPOS);
-
-  HWND main = GetParent(getScintillaWindow());
-  HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
-
-  std::map<int, std::wstring>::const_iterator error = errorText.find(position);
-  if (error != errorText.end())
-  {
-    SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
-    //OutputDebugString(error->second.c_str());
-  }
-  else
-  {
-    wchar_t title[256] = { 0 };
-    SendMessage(childHandle, WM_GETTEXT, sizeof(title) / sizeof(title[0]) - 1, reinterpret_cast<LPARAM>(title));
-
-    std::wstring str(title);
-    if (str.find(L" - ") == 0)
-    {
-      SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(L" - "));
-    }
-  }
+	linters = XmlParser::getLinters(getIniFileName());
+	if (linters.empty())
+	{
+		showTooltip(L"Linter: Empty or invalid linters.xml.");
+	}
 }
 
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)

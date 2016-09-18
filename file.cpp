@@ -48,30 +48,35 @@ std::string File::exec(const std::wstring &directory, std::wstring commandLine, 
     &startInfo,  // STARTUPINFO pointer 
     &procInfo);  // receives PROCESS_INFORMATION 
 
-  if (isSuccess)
+  if (!isSuccess)
   {
-    CloseHandle(procInfo.hProcess);
-    CloseHandle(procInfo.hThread);
+    std::string command;
+    command.assign(commandLine.begin(), commandLine.end());
 
-    CloseHandle(ERR_Wr);
-    CloseHandle(OUT_Wr);
-    CloseHandle(IN_Wr);
-
-    DWORD readBytes;
-    std::string buffer;
-    buffer.resize(4096);
-
-    for (;;)
-    {
-      isSuccess = ReadFile(OUT_Rd, &buffer[0], buffer.size(), &readBytes, NULL);
-      if (!isSuccess || readBytes == 0)
-      {
-        break;
-      }
-
-      result += std::string(&buffer[0], readBytes);
-    }
+	throw Linter::Exception("Linter: Can't execute command: " + command);
   }
+
+	CloseHandle(procInfo.hProcess);
+	CloseHandle(procInfo.hThread);
+
+	CloseHandle(ERR_Wr);
+	CloseHandle(OUT_Wr);
+	CloseHandle(IN_Wr);
+
+	DWORD readBytes;
+	std::string buffer;
+	buffer.resize(4096);
+
+	for (;;)
+	{
+		isSuccess = ReadFile(OUT_Rd, &buffer[0], buffer.size(), &readBytes, NULL);
+		if (!isSuccess || readBytes == 0)
+		{
+		break;
+		}
+
+		result += std::string(&buffer[0], readBytes);
+	}
 
   return result;
 }

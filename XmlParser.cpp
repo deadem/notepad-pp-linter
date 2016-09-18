@@ -17,64 +17,79 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 
   try
   {
-    hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID*)(&XMLDocument));
-    SUCCEEDED(hr) ? 0 : throw std::exception();
+	  hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID*)(&XMLDocument));
+	  if (!SUCCEEDED(hr) || !XMLDocument)
+	  {
+		  throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
+	  }
 
-    if (XMLDocument)
-    {
-      hr = XMLDocument->put_async(VARIANT_FALSE);
-      if (SUCCEEDED(hr))
-      {
-        std::wstring &string = Encoding::toUnicode(xml);
-        BSTR bstrValue(const_cast<wchar_t *>(string.c_str()));
+	  hr = XMLDocument->put_async(VARIANT_FALSE);
+	  if (!SUCCEEDED(hr))
+	  {
+		  throw ::Linter::Exception("Linter: Can't XMLDOMDocument2::put_async");
+	  }
 
-        short resultCode = FALSE;
-        hr = XMLDocument->loadXML(bstrValue, &resultCode);
-        if (SUCCEEDED(hr) && (resultCode == VARIANT_TRUE))
-        {
+	  std::wstring &string = Encoding::toUnicode(xml);
+	  BSTR bstrValue(const_cast<wchar_t *>(string.c_str()));
 
-          // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
-          hr = XMLDocument->selectNodes(_T("//error"), &XMLNodeList);
-          if (SUCCEEDED(hr))
-          {
-            LONG uLength;
+	  short resultCode = FALSE;
+	  hr = XMLDocument->loadXML(bstrValue, &resultCode);
+	  if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
+	  {
+		  throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
+	  }
 
-            hr = XMLNodeList->get_length(&uLength);
-            if (SUCCEEDED(hr))
-            {
-              for (int iIndex=0; iIndex < uLength; iIndex++)
-              {
-                IXMLDOMNode *node;
-                hr = XMLNodeList->nextNode(&node);
-                if (SUCCEEDED(hr))
-                {
-                  CComQIPtr<IXMLDOMElement> element(node);
-                  if (SUCCEEDED(hr) && element)
-                  {
-                    Error error;
-                    CComVariant value;
+	  // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
+	  hr = XMLDocument->selectNodes(_T("//error"), &XMLNodeList);
+	  if (!SUCCEEDED(hr))
+	  {
+		  throw ::Linter::Exception("Linter: Can't execute XPath //error");
+	  }
+	  LONG uLength;
 
-                    element->getAttribute(L"line", &value);
-                    error.m_line = _wtoi(value.bstrVal);
+	  hr = XMLNodeList->get_length(&uLength);
+	  if (!SUCCEEDED(hr))
+	  {
+		  throw ::Linter::Exception("Linter: Can't get XPath //error length");
+	  }
+	  for (int iIndex = 0; iIndex < uLength; iIndex++)
+	  {
+		  IXMLDOMNode *node;
+		  hr = XMLNodeList->nextNode(&node);
+		  if (!SUCCEEDED(hr))
+		  {
+			  throw ::Linter::Exception("Linter: Can't get next XPath element");
+		  }
+		  CComQIPtr<IXMLDOMElement> element(node);
+		  if (!SUCCEEDED(hr) && element)
+		  {
+			  throw ::Linter::Exception("Linter: XPath Element error");
+		  }
+		  Error error;
+		  CComVariant value;
 
-                    element->getAttribute(L"column", &value);
-                    error.m_column = _wtoi(value.bstrVal);
+		  element->getAttribute(L"line", &value);
+		  error.m_line = _wtoi(value.bstrVal);
 
-                    element->getAttribute(L"message", &value);
-                    error.m_message = value.bstrVal;
+		  element->getAttribute(L"column", &value);
+		  error.m_column = _wtoi(value.bstrVal);
 
-                    errors.push_back(error);
-                  }
-                  RELEASE(node);
-                }
-              }
-            }
-            RELEASE(XMLNodeList);
-          }
-        }
-      }
-      RELEASE(XMLDocument);
-    }
+		  element->getAttribute(L"message", &value);
+		  error.m_message = value.bstrVal;
+
+		  errors.push_back(error);
+		  RELEASE(node);
+	  }
+	  RELEASE(XMLNodeList);
+	  RELEASE(XMLDocument);
+  }
+  catch (::Linter::Exception &)
+  {
+	  RELEASE(XMLNode);
+	  RELEASE(XMLDocument);
+	  RELEASE(XMLNodeList);
+
+	  throw;
   }
   catch (...)
   {

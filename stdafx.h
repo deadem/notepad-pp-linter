@@ -17,3 +17,14 @@
 #include <atlstr.h>
 #include <ATLCom.h>
 #include <comutil.h>
+#include <exception>
+#include <string>
+
+namespace Linter
+{
+	struct Exception : public std::exception {
+		Exception(const std::string &message) : m_message(message) {}
+		virtual const char* what() const { return m_message.c_str(); }
+		std::string m_message;
+	};
+}
