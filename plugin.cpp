@@ -16,7 +16,7 @@ FuncItem funcItem[FUNCTIONS_COUNT];
 NppData nppData;
 HANDLE timers(0);
 
-BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall, LPVOID lpReserved )
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD reasonForCall, LPVOID lpReserved)
 {
   switch (reasonForCall)
   {
@@ -45,12 +45,12 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
   initConfig();
 }
 
-extern "C" __declspec(dllexport) const TCHAR * getName()
+extern "C" __declspec(dllexport) const TCHAR *getName()
 {
   return PLUGIN_NAME;
 }
 
-extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
+extern "C" __declspec(dllexport) FuncItem *getFuncsArray(int *nbF)
 {
   *nbF = FUNCTIONS_COUNT;
   return funcItem;
@@ -92,10 +92,10 @@ void initConfig()
 
 void editConfig()
 {
-  ::SendMessage(nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM) iniFilePath);
+  ::SendMessage(nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)iniFilePath);
 }
 
-bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool check0nInit) 
+bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool check0nInit)
 {
   if (index >= FUNCTIONS_COUNT)
   {
@@ -148,21 +148,21 @@ LRESULT SendApp(UINT Msg, WPARAM wParam, LPARAM lParam)
 
 std::string getDocumentText()
 {
-    LRESULT lengthDoc = SendEditor(SCI_GETLENGTH) + 1;
+  LRESULT lengthDoc = SendEditor(SCI_GETLENGTH) + 1;
 
-    char * buff = new char[ lengthDoc ];
-    SendEditor(SCI_GETTEXT, lengthDoc, (LPARAM)buff);
-    std::string text(buff, lengthDoc);
-    text = text.c_str();
-    delete[] buff;
-    return text;
+  char *buff = new char[lengthDoc];
+  SendEditor(SCI_GETTEXT, lengthDoc, (LPARAM)buff);
+  std::string text(buff, lengthDoc);
+  text = text.c_str();
+  delete[] buff;
+  return text;
 }
 
 std::string getLineText(int line)
 {
   LRESULT length = SendEditor(SCI_LINELENGTH, line);
 
-  char * buff = new char [ length + 1];
+  char *buff = new char[length + 1];
   SendEditor(SCI_GETLINE, line, (LPARAM)buff);
   std::string text(buff, length);
   text = text.c_str();

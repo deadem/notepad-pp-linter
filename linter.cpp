@@ -20,11 +20,10 @@ std::vector<XmlParser::Error> errors;
 std::map<int, std::wstring> errorText;
 std::vector<XmlParser::Linter> linters;
 
-
 struct FileGuard
 {
-  FileGuard() {};
-  
+  FileGuard(){};
+
   void file(const std::wstring file)
   {
     clear();
@@ -38,7 +37,10 @@ struct FileGuard
       m_file.clear();
     }
   }
-  ~FileGuard() { clear(); }
+  ~FileGuard()
+  {
+    clear();
+  }
 
   std::wstring m_file;
 } guard;
@@ -52,8 +54,8 @@ void ClearErrors()
 
 std::wstring GetFilePart(unsigned int part)
 {
-  LPTSTR buff = new TCHAR[ MAX_PATH + 1 ];
-  SendApp(part, MAX_PATH, (LPARAM) buff);
+  LPTSTR buff = new TCHAR[MAX_PATH + 1];
+  SendApp(part, MAX_PATH, (LPARAM)buff);
   std::wstring text(buff);
   delete[] buff;
   return text;
@@ -61,33 +63,33 @@ std::wstring GetFilePart(unsigned int part)
 
 void showTooltip(std::wstring message = std::wstring())
 {
-	int  position = SendEditor(SCI_GETCURRENTPOS);
+  int position = SendEditor(SCI_GETCURRENTPOS);
 
-	HWND main = GetParent(getScintillaWindow());
-	HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
+  HWND main = GetParent(getScintillaWindow());
+  HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
 
-	std::map<int, std::wstring>::const_iterator error = errorText.find(position);
-	if (error != errorText.end())
-	{
-		SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
-		//OutputDebugString(error->second.c_str());
-	}
-	else
-	{
-		wchar_t title[256] = { 0 };
-		SendMessage(childHandle, WM_GETTEXT, sizeof(title) / sizeof(title[0]) - 1, reinterpret_cast<LPARAM>(title));
+  std::map<int, std::wstring>::const_iterator error = errorText.find(position);
+  if (error != errorText.end())
+  {
+    SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
+    //OutputDebugString(error->second.c_str());
+  }
+  else
+  {
+    wchar_t title[256] = {0};
+    SendMessage(childHandle, WM_GETTEXT, sizeof(title) / sizeof(title[0]) - 1, reinterpret_cast<LPARAM>(title));
 
-		std::wstring str(title);
-		if (message.empty() && str.find(L" - ") == 0)
-		{
-			message = L" - ";
-		}
+    std::wstring str(title);
+    if (message.empty() && str.find(L" - ") == 0)
+    {
+      message = L" - ";
+    }
 
-		if (!message.empty())
-		{
-			SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(message.c_str()));
-		}
-	}
+    if (!message.empty())
+    {
+      SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(message.c_str()));
+    }
+  }
 }
 
 unsigned int __stdcall AsyncCheck(void *)
@@ -97,7 +99,7 @@ unsigned int __stdcall AsyncCheck(void *)
   errors.clear();
 
   std::vector<std::wstring> commands;
-  for each (const XmlParser::Linter &linter in linters)
+  for each(const XmlParser::Linter &linter in linters)
   {
     if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
     {
@@ -111,20 +113,20 @@ unsigned int __stdcall AsyncCheck(void *)
   {
     std::wstring file = File::write(directory, getDocumentText());
     guard.file(file);
-    for each (const std::wstring &command in commands)
+    for each(const std::wstring &command in commands)
     {
       //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-		try
-		{
-			std::string xml = File::exec(directory, command, file);
-			std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-			errors.insert(errors.end(), parseError.begin(), parseError.end());
-		}
-		catch (Linter::Exception &e)
-		{
-			std::string str(e.what());
-			showTooltip(std::wstring(str.begin(), str.end()));
-		}
+      try
+      {
+        std::string xml = File::exec(directory, command, file);
+        std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+        errors.insert(errors.end(), parseError.begin(), parseError.end());
+      }
+      catch (Linter::Exception &e)
+      {
+        std::string str(e.what());
+        showTooltip(std::wstring(str.begin(), str.end()));
+      }
     }
     guard.clear();
   }
@@ -153,7 +155,7 @@ VOID CALLBACK RunThread(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
   if (threadHandle == 0)
   {
-    for each (const XmlParser::Linter &linter in linters)
+    for each(const XmlParser::Linter &linter in linters)
     {
       if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
       {
@@ -166,7 +168,6 @@ VOID CALLBACK RunThread(PVOID lpParam, BOOLEAN TimerOrWaitFired)
   }
 }
 
-
 void Check()
 {
   if (isChanged)
@@ -178,11 +179,19 @@ void Check()
 
 void initLinters()
 {
-	linters = XmlParser::getLinters(getIniFileName());
-	if (linters.empty())
-	{
-		showTooltip(L"Linter: Empty or invalid linters.xml.");
-	}
+  try
+  {
+    linters = XmlParser::getLinters(getIniFileName());
+    if (linters.empty())
+    {
+      showTooltip(L"Linter: Empty linters.xml.");
+    }
+  }
+  catch (Linter::Exception &e)
+  {
+    std::string str(e.what());
+    showTooltip(std::wstring(str.begin(), str.end()));
+  }
 }
 
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
@@ -198,7 +207,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         if (isBufferChanged == false)
         {
           DrawBoxes();
-        } else {
+        }
+        else
+        {
           isChanged = true;
         }
         threadHandle = 0;
@@ -207,24 +218,24 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
       }
     }
   }
-  switch (notifyCode->nmhdr.code) 
+  switch (notifyCode->nmhdr.code)
   {
-  case NPPN_READY:
-    SendEditor(SCI_INDICSETSTYLE ,SCE_SQUIGGLE_UNDERLINE_RED, INDIC_BOX);// INDIC_SQUIGGLE);
-    SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, 0x0000ff);
+    case NPPN_READY:
+      SendEditor(SCI_INDICSETSTYLE, SCE_SQUIGGLE_UNDERLINE_RED, INDIC_BOX);  // INDIC_SQUIGGLE);
+      SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, 0x0000ff);
 
-    initLinters();
-    isReady = true;
-    isChanged = true;
-    Check();
-    break;
+      initLinters();
+      isReady = true;
+      isChanged = true;
+      Check();
+      break;
 
-  case NPPN_SHUTDOWN:
-    commandMenuCleanUp();
-    break;
+    case NPPN_SHUTDOWN:
+      commandMenuCleanUp();
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   if (!isReady)
@@ -234,33 +245,34 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 
   switch (notifyCode->nmhdr.code)
   {
-  case NPPN_BUFFERACTIVATED:
-    isChanged = true;
-    isBufferChanged = true;
-    Check();
-    break;
-  case SCN_MODIFIED:
-    if (notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT)){
-      isReady = false;
+    case NPPN_BUFFERACTIVATED:
       isChanged = true;
+      isBufferChanged = true;
       Check();
-      isReady = true;
-    }
-    break;
+      break;
+    case SCN_MODIFIED:
+      if (notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT))
+      {
+        isReady = false;
+        isChanged = true;
+        Check();
+        isReady = true;
+      }
+      break;
 
-  default:
+    default:
     {
       //CStringW debug;
       //debug.Format(L"code: %u\n", notifyCode->nmhdr.code);
       //OutputDebugString(debug);
     }
     break;
-  case SCN_UPDATEUI:
-    showTooltip();
-    break;
-  case SCN_PAINTED:
-  case SCN_FOCUSIN:
-  case SCN_FOCUSOUT:
-    break;
+    case SCN_UPDATEUI:
+      showTooltip();
+      break;
+    case SCN_PAINTED:
+    case SCN_FOCUSIN:
+    case SCN_FOCUSOUT:
+      break;
   }
 }

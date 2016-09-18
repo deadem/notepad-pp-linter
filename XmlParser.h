@@ -12,7 +12,8 @@ public:
     int m_column;
     std::wstring m_message;
   };
-  struct Linter {
+  struct Linter
+  {
     std::wstring m_extension;
     std::wstring m_command;
   };

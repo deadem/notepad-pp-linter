@@ -5,7 +5,12 @@
 #include <msxml6.h>
 #pragma comment(lib, "msxml6.lib")
 
-#define RELEASE(iface) if (iface) { iface->Release(); iface = NULL; }
+#define RELEASE(iface) \
+  if (iface)           \
+  {                    \
+    iface->Release();  \
+    iface = NULL;      \
+  }
 
 std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 {
@@ -17,79 +22,79 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 
   try
   {
-	  hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID*)(&XMLDocument));
-	  if (!SUCCEEDED(hr) || !XMLDocument)
-	  {
-		  throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
-	  }
+    hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)(&XMLDocument));
+    if (!SUCCEEDED(hr) || !XMLDocument)
+    {
+      throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
+    }
 
-	  hr = XMLDocument->put_async(VARIANT_FALSE);
-	  if (!SUCCEEDED(hr))
-	  {
-		  throw ::Linter::Exception("Linter: Can't XMLDOMDocument2::put_async");
-	  }
+    hr = XMLDocument->put_async(VARIANT_FALSE);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't XMLDOMDocument2::put_async");
+    }
 
-	  std::wstring &string = Encoding::toUnicode(xml);
-	  BSTR bstrValue(const_cast<wchar_t *>(string.c_str()));
+    std::wstring &string = Encoding::toUnicode(xml);
+    BSTR bstrValue(const_cast<wchar_t *>(string.c_str()));
 
-	  short resultCode = FALSE;
-	  hr = XMLDocument->loadXML(bstrValue, &resultCode);
-	  if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
-	  {
-		  throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
-	  }
+    short resultCode = FALSE;
+    hr = XMLDocument->loadXML(bstrValue, &resultCode);
+    if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
+    {
+      throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
+    }
 
-	  // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
-	  hr = XMLDocument->selectNodes(_T("//error"), &XMLNodeList);
-	  if (!SUCCEEDED(hr))
-	  {
-		  throw ::Linter::Exception("Linter: Can't execute XPath //error");
-	  }
-	  LONG uLength;
+    // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
+    hr = XMLDocument->selectNodes(_T("//error"), &XMLNodeList);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't execute XPath //error");
+    }
+    LONG uLength;
 
-	  hr = XMLNodeList->get_length(&uLength);
-	  if (!SUCCEEDED(hr))
-	  {
-		  throw ::Linter::Exception("Linter: Can't get XPath //error length");
-	  }
-	  for (int iIndex = 0; iIndex < uLength; iIndex++)
-	  {
-		  IXMLDOMNode *node;
-		  hr = XMLNodeList->nextNode(&node);
-		  if (!SUCCEEDED(hr))
-		  {
-			  throw ::Linter::Exception("Linter: Can't get next XPath element");
-		  }
-		  CComQIPtr<IXMLDOMElement> element(node);
-		  if (!SUCCEEDED(hr) && element)
-		  {
-			  throw ::Linter::Exception("Linter: XPath Element error");
-		  }
-		  Error error;
-		  CComVariant value;
+    hr = XMLNodeList->get_length(&uLength);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't get XPath //error length");
+    }
+    for (int iIndex = 0; iIndex < uLength; iIndex++)
+    {
+      IXMLDOMNode *node;
+      hr = XMLNodeList->nextNode(&node);
+      if (!SUCCEEDED(hr))
+      {
+        throw ::Linter::Exception("Linter: Can't get next XPath element");
+      }
+      CComQIPtr<IXMLDOMElement> element(node);
+      if (!SUCCEEDED(hr) && element)
+      {
+        throw ::Linter::Exception("Linter: XPath Element error");
+      }
+      Error error;
+      CComVariant value;
 
-		  element->getAttribute(L"line", &value);
-		  error.m_line = _wtoi(value.bstrVal);
+      element->getAttribute(L"line", &value);
+      error.m_line = _wtoi(value.bstrVal);
 
-		  element->getAttribute(L"column", &value);
-		  error.m_column = _wtoi(value.bstrVal);
+      element->getAttribute(L"column", &value);
+      error.m_column = _wtoi(value.bstrVal);
 
-		  element->getAttribute(L"message", &value);
-		  error.m_message = value.bstrVal;
+      element->getAttribute(L"message", &value);
+      error.m_message = value.bstrVal;
 
-		  errors.push_back(error);
-		  RELEASE(node);
-	  }
-	  RELEASE(XMLNodeList);
-	  RELEASE(XMLDocument);
+      errors.push_back(error);
+      RELEASE(node);
+    }
+    RELEASE(XMLNodeList);
+    RELEASE(XMLDocument);
   }
   catch (::Linter::Exception &)
   {
-	  RELEASE(XMLNode);
-	  RELEASE(XMLDocument);
-	  RELEASE(XMLNodeList);
+    RELEASE(XMLNode);
+    RELEASE(XMLDocument);
+    RELEASE(XMLNodeList);
 
-	  throw;
+    throw;
   }
   catch (...)
   {
@@ -101,7 +106,6 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
   return errors;
 }
 
-
 std::vector<XmlParser::Linter> XmlParser::getLinters(std::wstring file)
 {
   std::vector<XmlParser::Linter> linters;
@@ -112,61 +116,74 @@ std::vector<XmlParser::Linter> XmlParser::getLinters(std::wstring file)
 
   try
   {
-    hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID*)(&XMLDocument));
-    SUCCEEDED(hr) ? 0 : throw std::exception();
-
-    if (XMLDocument)
+    hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)(&XMLDocument));
+    if (!SUCCEEDED(hr) || !XMLDocument)
     {
-      hr = XMLDocument->put_async(VARIANT_FALSE);
+      throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
+    }
+
+    hr = XMLDocument->put_async(VARIANT_FALSE);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: XMLDOMDocument2::put_async error.");
+    }
+
+    BSTR bstrValue(const_cast<wchar_t *>(file.c_str()));
+    CComVariant value(bstrValue);
+
+    short resultCode = FALSE;
+    hr = XMLDocument->load(value, &resultCode);
+    if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
+    {
+      throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
+    }
+    // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
+    hr = XMLDocument->selectNodes(_T("//linter"), &XMLNodeList);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't execute XPath //linter");
+    }
+    LONG uLength;
+
+    hr = XMLNodeList->get_length(&uLength);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't get XPath length");
+    }
+
+    for (int iIndex = 0; iIndex < uLength; iIndex++)
+    {
+      IXMLDOMNode *node;
+      hr = XMLNodeList->nextNode(&node);
       if (SUCCEEDED(hr))
       {
-        BSTR bstrValue(const_cast<wchar_t *>(file.c_str()));
-        CComVariant value(bstrValue);
-
-        short resultCode = FALSE;
-        hr = XMLDocument->load(value, &resultCode);
-        if (SUCCEEDED(hr) && (resultCode == VARIANT_TRUE))
+        CComQIPtr<IXMLDOMElement> element(node);
+        if (SUCCEEDED(hr) && element)
         {
+          Linter linter;
+          CComVariant value;
 
-          // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
-          hr = XMLDocument->selectNodes(_T("//linter"), &XMLNodeList);
-          if (SUCCEEDED(hr))
-          {
-            LONG uLength;
+          element->getAttribute(L"extension", &value);
+          linter.m_extension = value.bstrVal;
 
-            hr = XMLNodeList->get_length(&uLength);
-            if (SUCCEEDED(hr))
-            {
-              for (int iIndex=0; iIndex < uLength; iIndex++)
-              {
-                IXMLDOMNode *node;
-                hr = XMLNodeList->nextNode(&node);
-                if (SUCCEEDED(hr))
-                {
-                  CComQIPtr<IXMLDOMElement> element(node);
-                  if (SUCCEEDED(hr) && element)
-                  {
-                    Linter linter;
-                    CComVariant value;
+          element->getAttribute(L"command", &value);
+          linter.m_command = value.bstrVal;
 
-                    element->getAttribute(L"extension", &value);
-                    linter.m_extension =  value.bstrVal;
-
-                    element->getAttribute(L"command", &value);
-                    linter.m_command = value.bstrVal;
-
-                    linters.push_back(linter);
-                  }
-                  RELEASE(node);
-                }
-              }
-            }
-            RELEASE(XMLNodeList);
-          }
+          linters.push_back(linter);
         }
+        RELEASE(node);
       }
-      RELEASE(XMLDocument);
     }
+    RELEASE(XMLNodeList);
+    RELEASE(XMLDocument);
+  }
+  catch (::Linter::Exception &)
+  {
+    RELEASE(XMLNode);
+    RELEASE(XMLDocument);
+    RELEASE(XMLNodeList);
+
+    throw;
   }
   catch (...)
   {

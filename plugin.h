@@ -24,5 +24,3 @@ std::string getDocumentText();
 std::string getLineText(int line);
 LRESULT getPositionForLine(int line);
 void ShowError(LRESULT start, LRESULT end, bool off = true);
-
-
