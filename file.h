@@ -4,6 +4,13 @@
 class File
 {
 public:
-  static std::string exec(const std::wstring &directory, std::wstring commandLine, const std::wstring &parameters);
-  static std::wstring write(const std::wstring &directory, const std::string &data);
+  File(const std::wstring &fileName, const std::wstring &directory);
+  ~File();
+  std::string exec(std::wstring commandLine);
+  bool write(const std::string &data);
+
+private:
+  std::wstring m_fileName;
+  std::wstring m_directory;
+  std::wstring m_file;
 };

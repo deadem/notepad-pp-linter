@@ -20,31 +20,6 @@ std::vector<XmlParser::Error> errors;
 std::map<int, std::wstring> errorText;
 std::vector<XmlParser::Linter> linters;
 
-struct FileGuard
-{
-  FileGuard(){};
-
-  void file(const std::wstring file)
-  {
-    clear();
-    m_file = file;
-  }
-  void clear()
-  {
-    if (!m_file.empty())
-    {
-      _wunlink(m_file.c_str());
-      m_file.clear();
-    }
-  }
-  ~FileGuard()
-  {
-    clear();
-  }
-
-  std::wstring m_file;
-} guard;
-
 void ClearErrors()
 {
   LRESULT length = SendEditor(SCI_GETLENGTH);
@@ -107,28 +82,27 @@ unsigned int __stdcall AsyncCheck(void *)
     }
   }
 
-  std::wstring directory = GetFilePart(NPPM_GETCURRENTDIRECTORY);
-
   if (!commands.empty())
   {
-    std::wstring file = File::write(directory, getDocumentText());
-    guard.file(file);
-    for each(const std::wstring &command in commands)
-    {
-      //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-      try
+    File file(GetFilePart(NPPM_GETFILENAME), GetFilePart(NPPM_GETCURRENTDIRECTORY));
+    if (file.write(getDocumentText())) {
+      for each(const std::wstring &command in commands)
       {
-        std::string xml = File::exec(directory, command, file);
-        std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-        errors.insert(errors.end(), parseError.begin(), parseError.end());
-      }
-      catch (Linter::Exception &e)
-      {
-        std::string str(e.what());
-        showTooltip(std::wstring(str.begin(), str.end()));
+        //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
+        try
+        {
+          std::string xml = file.exec(command);
+          //File::exec(directory, command, file);
+          std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+          errors.insert(errors.end(), parseError.begin(), parseError.end());
+        }
+        catch (Linter::Exception &e)
+        {
+          std::string str(e.what());
+          showTooltip(std::wstring(str.begin(), str.end()));
+        }
       }
     }
-    guard.clear();
   }
 
   return 0;

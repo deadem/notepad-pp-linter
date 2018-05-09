@@ -1,14 +1,14 @@
 #include "StdAfx.h"
 #include "file.h"
 
-std::string File::exec(const std::wstring &directory, std::wstring commandLine, const std::wstring &parameters)
+std::string File::exec(std::wstring commandLine)
 {
   std::string result;
 
-  if (!parameters.empty())
+  if (!m_file.empty())
   {
     commandLine += ' ';
-    commandLine += parameters;
+    commandLine += m_file;
   }
 
   PROCESS_INFORMATION procInfo = {0};
@@ -44,7 +44,7 @@ std::string File::exec(const std::wstring &directory, std::wstring commandLine, 
     TRUE,                                        // handles are inherited
     CREATE_NO_WINDOW,                            // creation flags
     NULL,                                        // use parent's environment
-    directory.c_str(),                           // use parent's current directory
+    m_directory.c_str(),                         // use parent's current directory
     &startInfo,                                  // STARTUPINFO pointer
     &procInfo);                                  // receives PROCESS_INFORMATION
 
@@ -81,30 +81,39 @@ std::string File::exec(const std::wstring &directory, std::wstring commandLine, 
   return result;
 }
 
-std::wstring File::write(const std::wstring &directory, const std::string &data)
+File::File(const std::wstring &fileName, const std::wstring &directory): m_fileName(fileName), m_directory(directory)
+{
+};
+
+
+File::~File()
+{
+  if (!m_file.empty())
+  {
+    _wunlink(m_file.c_str());
+  }
+}
+
+bool File::write(const std::string &data)
 {
   if (data.empty())
   {
-    return L"";
-  }
-  TCHAR filename[MAX_PATH] = {0};
-
-  DWORD retVal = GetTempFileName(directory.c_str(), L"deadem", 0, filename);
-  if (retVal == 0)
-  {
-    return L"";
+    return false;
   }
 
-  HANDLE fileHandle = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  std::wstring tempFileName = m_directory + L"/" + m_fileName + L".temp.linter.file.tmp";
+
+  HANDLE fileHandle = CreateFile(tempFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_TEMPORARY, NULL);
   if (fileHandle == INVALID_HANDLE_VALUE)
   {
-    return L"";
+    return false;
   }
 
   DWORD bytes(0);
   WriteFile(fileHandle, &data[0], static_cast<DWORD>(data.size() * sizeof(data[0])), &bytes, 0);
-
   CloseHandle(fileHandle);
 
-  return filename;
+  m_file = tempFileName;
+
+  return true;
 }
