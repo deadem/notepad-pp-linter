@@ -19,4 +19,5 @@ Copyright (c) 2016 Vladimir Soshkin <deadem@gmail.com> MIT License
   <linter extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\jscs.cmd --reporter=checkstyle"/>
   <linter extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\jshint.cmd --reporter=checkstyle"/>
   <linter extension=".css" command="C:\Users\deadem\AppData\Roaming\npm\csslint.cmd --format=checkstyle-xml"/>
+  <linter extension=".js" command="&quot;C:\Path with spaces\somelint.cmd&quot; --format checkstyle"/>
 </NotepadPlus>
