@@ -8,7 +8,9 @@ std::string File::exec(std::wstring commandLine)
   if (!m_file.empty())
   {
     commandLine += ' ';
+    commandLine += '"';
     commandLine += m_file;
+    commandLine += '"';
   }
 
   PROCESS_INFORMATION procInfo = {0};
