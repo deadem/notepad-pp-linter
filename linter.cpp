@@ -18,7 +18,7 @@ HANDLE threadHandle(0);
 
 std::vector<XmlParser::Error> errors;
 std::map<int, std::wstring> errorText;
-std::vector<XmlParser::Linter> linters;
+XmlParser::Settings settings;
 
 void ClearErrors()
 {
@@ -74,7 +74,7 @@ unsigned int __stdcall AsyncCheck(void *)
   errors.clear();
 
   std::vector<std::wstring> commands;
-  for each(const XmlParser::Linter &linter in linters)
+  for each(const XmlParser::Linter &linter in settings.m_linters)
   {
     if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
     {
@@ -129,7 +129,7 @@ VOID CALLBACK RunThread(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
   if (threadHandle == 0)
   {
-    for each(const XmlParser::Linter &linter in linters)
+    for each(const XmlParser::Linter &linter in settings.m_linters)
     {
       if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
       {
@@ -155,8 +155,8 @@ void initLinters()
 {
   try
   {
-    linters = XmlParser::getLinters(getIniFileName());
-    if (linters.empty())
+    settings = XmlParser::getLinters(getIniFileName());
+    if (settings.m_linters.empty())
     {
       showTooltip(L"Linter: Empty linters.xml.");
     }
@@ -199,6 +199,20 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
       SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, 0x0000ff);
 
       initLinters();
+
+      if (!settings.m_linters.empty() && (settings.m_alpha != -1 || settings.m_color != -1))
+      {
+        SendEditor(SCI_INDICSETSTYLE, SCE_SQUIGGLE_UNDERLINE_RED, INDIC_ROUNDBOX);
+        if (settings.m_alpha != -1)
+        {
+          SendEditor(SCI_INDICSETALPHA, SCE_SQUIGGLE_UNDERLINE_RED, settings.m_alpha);
+        }
+        if (settings.m_alpha != -1)
+        {
+          SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, settings.m_color);
+        }
+      }
+
       isReady = true;
       isChanged = true;
       Check();

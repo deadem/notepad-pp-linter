@@ -19,6 +19,7 @@
 #include <comutil.h>
 #include <exception>
 #include <string>
+#include <sstream>
 
 namespace Linter
 {

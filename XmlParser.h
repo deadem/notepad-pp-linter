@@ -12,11 +12,23 @@ public:
     int m_column;
     std::wstring m_message;
   };
+
   struct Linter
   {
     std::wstring m_extension;
     std::wstring m_command;
   };
+
+  struct Settings {
+    Settings() : m_alpha(-1), m_color(-1)
+    {
+    }
+
+    int m_color;
+    int m_alpha;
+    std::vector<XmlParser::Linter> m_linters;
+  };
+
   static std::vector<Error> getErrors(const std::string &xml);
-  static std::vector<Linter> getLinters(std::wstring file);
+  static Settings getLinters(std::wstring file);
 };

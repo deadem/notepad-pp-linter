@@ -106,13 +106,14 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
   return errors;
 }
 
-std::vector<XmlParser::Linter> XmlParser::getLinters(std::wstring file)
+XmlParser::Settings XmlParser::getLinters(std::wstring file)
 {
-  std::vector<XmlParser::Linter> linters;
-  IXMLDOMNodeList *XMLNodeList(NULL);
+  XmlParser::Settings settings;
+  IXMLDOMNodeList *XMLNodeList(NULL), *styleNode(NULL);
   IXMLDOMNode *XMLNode(NULL);
   IXMLDOMDocument2 *XMLDocument(NULL);
   HRESULT hr;
+  LONG uLength;
 
   try
   {
@@ -137,13 +138,47 @@ std::vector<XmlParser::Linter> XmlParser::getLinters(std::wstring file)
     {
       throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
     }
+
+    hr = XMLDocument->selectNodes(_T("//style"), &styleNode);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't execute XPath //style");
+    }
+
+    hr = styleNode->get_length(&uLength);
+    if (!SUCCEEDED(hr))
+    {
+      throw ::Linter::Exception("Linter: Can't get XPath root length");
+    }
+    else if (uLength)
+    {
+      IXMLDOMNode *node;
+      hr = styleNode->nextNode(&node);
+      if (SUCCEEDED(hr))
+      {
+        CComQIPtr<IXMLDOMElement> element(node);
+
+        CComVariant value;
+        if (SUCCEEDED(element->getAttribute(L"alpha", &value)))
+        {
+          std::wstringstream data(std::wstring(value.bstrVal ? value.bstrVal : L""));
+          data >> settings.m_alpha;
+        }
+
+        if (SUCCEEDED(element->getAttribute(L"color", &value)))
+        {
+          std::wstringstream data(std::wstring(value.bstrVal ? value.bstrVal : L""));
+          data >> std::hex >> settings.m_color;
+        }
+      }
+    }
+
     // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
     hr = XMLDocument->selectNodes(_T("//linter"), &XMLNodeList);
     if (!SUCCEEDED(hr))
     {
       throw ::Linter::Exception("Linter: Can't execute XPath //linter");
     }
-    LONG uLength;
 
     hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
@@ -169,7 +204,7 @@ std::vector<XmlParser::Linter> XmlParser::getLinters(std::wstring file)
           element->getAttribute(L"command", &value);
           linter.m_command = value.bstrVal;
 
-          linters.push_back(linter);
+          settings.m_linters.push_back(linter);
         }
         RELEASE(node);
       }
@@ -192,5 +227,5 @@ std::vector<XmlParser::Linter> XmlParser::getLinters(std::wstring file)
     RELEASE(XMLNodeList);
   }
 
-  return linters;
+  return settings;
 }

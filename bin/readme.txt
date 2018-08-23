@@ -21,3 +21,17 @@ Copyright (c) 2016 Vladimir Soshkin <deadem@gmail.com> MIT License
   <linter extension=".css" command="C:\Users\deadem\AppData\Roaming\npm\csslint.cmd --format=checkstyle-xml"/>
   <linter extension=".js" command="&quot;C:\Path with spaces\somelint.cmd&quot; --format checkstyle"/>
 </NotepadPlus>
+
+== Optional config tags ==
+
+=== style ===
+"color" attribute is a "RGB" hex color.
+"alpha" value can range from 0 (completely transparent) to 255 (no transparency).
+
+<?xml version="1.0" encoding="utf-8" ?>
+<NotepadPlus>
+  <style color="0000FF" alpha="100" />
+
+  <linter ... />
+  <linter ... />
+</NotepadPlus>
