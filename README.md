@@ -15,3 +15,12 @@
   <linter extension=".js" command="&quot;C:\Path with spaces\somelint.cmd&quot; --format checkstyle"/>
 </NotepadPlus>
 ```
+
+You can change default colors by an optional "style" tag. "color" attribute is a RGB hex color value, "alpha" value can range from 0 (completely transparent) to 255 (no transparency).
+
+```xml
+<NotepadPlus>
+  <style color="0000FF" alpha="100" />
+...
+</NotepadPlus>
+```
