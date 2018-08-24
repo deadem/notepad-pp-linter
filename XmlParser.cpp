@@ -165,10 +165,21 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
           data >> settings.m_alpha;
         }
 
+
         if (SUCCEEDED(element->getAttribute(L"color", &value)))
         {
           std::wstringstream data(std::wstring(value.bstrVal ? value.bstrVal : L""));
-          data >> std::hex >> settings.m_color;
+          unsigned int color(0);
+          data >> std::hex >> color;
+
+          // reverse colors for scintilla's LE order
+          settings.m_color = color & 0xFF;
+
+          settings.m_color <<= 8; color >>= 8;
+          settings.m_color |= color & 0xFF;
+
+          settings.m_color <<= 8; color >>= 8;
+          settings.m_color |= color & 0xFF;
         }
       }
     }

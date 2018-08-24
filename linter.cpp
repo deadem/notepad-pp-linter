@@ -27,6 +27,27 @@ void ClearErrors()
   SendEditor(SCI_ANNOTATIONCLEARALL);
 }
 
+void InitErrors()
+{
+  SendEditor(SCI_INDICSETSTYLE, SCE_SQUIGGLE_UNDERLINE_RED, INDIC_BOX);  // INDIC_SQUIGGLE);
+  SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, 0x0000ff);
+
+  if (!settings.m_linters.empty() && (settings.m_alpha != -1 || settings.m_color != -1))
+  {
+    SendEditor(SCI_INDICSETSTYLE, SCE_SQUIGGLE_UNDERLINE_RED, INDIC_ROUNDBOX);
+
+    if (settings.m_alpha != -1)
+    {
+      SendEditor(SCI_INDICSETALPHA, SCE_SQUIGGLE_UNDERLINE_RED, settings.m_alpha);
+    }
+
+    if (settings.m_color!= -1)
+    {
+      SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, settings.m_color);
+    }
+  }
+}
+
 std::wstring GetFilePart(unsigned int part)
 {
   LPTSTR buff = new TCHAR[MAX_PATH + 1];
@@ -112,18 +133,20 @@ void DrawBoxes()
 {
   ClearErrors();
   errorText.clear();
+  if (!errors.empty())
+  {
+    InitErrors();
+  }
+
   for each(const XmlParser::Error &error in errors)
   {
     int position = getPositionForLine(error.m_line - 1);
     position += Encoding::utfOffset(getLineText(error.m_line - 1), error.m_column - 1);
     errorText[position] = error.m_message;
     ShowError(position, position + 1);
-
-    //SendEditor(SCI_ANNOTATIONSETSTYLE, error.m_line - 1, SCE_SQUIGGLE_UNDERLINE_RED);
-    //SendEditor(SCI_ANNOTATIONSETTEXT, error.m_line - 1, (LPARAM) error.m_message.c_str());
   }
-  //SendEditor(SCI_ANNOTATIONSETVISIBLE, ANNOTATION_BOXED);
 }
+
 
 VOID CALLBACK RunThread(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
@@ -195,23 +218,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
   switch (notifyCode->nmhdr.code)
   {
     case NPPN_READY:
-      SendEditor(SCI_INDICSETSTYLE, SCE_SQUIGGLE_UNDERLINE_RED, INDIC_BOX);  // INDIC_SQUIGGLE);
-      SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, 0x0000ff);
-
       initLinters();
-
-      if (!settings.m_linters.empty() && (settings.m_alpha != -1 || settings.m_color != -1))
-      {
-        SendEditor(SCI_INDICSETSTYLE, SCE_SQUIGGLE_UNDERLINE_RED, INDIC_ROUNDBOX);
-        if (settings.m_alpha != -1)
-        {
-          SendEditor(SCI_INDICSETALPHA, SCE_SQUIGGLE_UNDERLINE_RED, settings.m_alpha);
-        }
-        if (settings.m_alpha != -1)
-        {
-          SendEditor(SCI_INDICSETFORE, SCE_SQUIGGLE_UNDERLINE_RED, settings.m_color);
-        }
-      }
+      InitErrors();
 
       isReady = true;
       isChanged = true;
