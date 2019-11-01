@@ -15,12 +15,12 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef PLUGININTERFACE_H
-#define PLUGININTERFACE_H
+#pragma once
 
-#include <windows.h>
 #include "Scintilla.h"
 #include "Notepad_plus_msgs.h"
+
+
 
 const int nbChar = 64;
 
@@ -62,8 +62,8 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *);
 extern "C" __declspec(dllexport) void beNotified(SCNotification *);
 extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam);
 
-#ifdef UNICODE
-extern "C" __declspec(dllexport) BOOL isUnicode();
-#endif //UNICODE
 
-#endif //PLUGININTERFACE_H
+extern "C" __declspec(dllexport) BOOL isUnicode();
+
+
+
