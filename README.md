@@ -1,5 +1,11 @@
 # Notepad++ Linter
 
+A Notepad++ plugin that allows realtime code check against any checkstyle-compatible linter: jshint, eslint, jscs, phpcs, csslint etc.
+
+![](/img/1.jpg?raw=true)
+
+## Installation
+
  - Copy bin/linter.dll to your Notepad++ plugins directory
  - Plugins -> Linter -> Edit config
  - Restart Notepad++
