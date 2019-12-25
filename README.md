@@ -19,6 +19,7 @@ A Notepad++ plugin that allows realtime code check against any checkstyle-compat
   <linter extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\jshint.cmd --reporter=checkstyle"/>
   <linter extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\eslint.cmd --format checkstyle"/>
   <linter extension=".js" command="&quot;C:\Path with spaces\somelint.cmd&quot; --format checkstyle"/>
+  <linter extension=".php" command="C:\Path_to\phpcs --report=checkstyle"/>
 </NotepadPlus>
 ```
 
