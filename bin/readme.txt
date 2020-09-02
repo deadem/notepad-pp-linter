@@ -22,6 +22,9 @@ Copyright (c) 2016 Vladimir Soshkin <deadem@gmail.com> MIT License
   <linter extension=".js" command="&quot;C:\Path with spaces\somelint.cmd&quot; --format checkstyle"/>
 </NotepadPlus>
 
+Optional attribute `stdin`="1" can be used to lint from stdin instead of temp file. i.e: 
+  <linter stdin="1" extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\eslint.cmd --stdin --format checkstyle"/>
+
 == Optional config tags ==
 
 === style ===

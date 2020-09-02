@@ -215,6 +215,9 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
           element->getAttribute(L"command", &value);
           linter.m_command = value.bstrVal;
 
+          element->getAttribute(L"stdin", &value);
+          linter.m_useStdin = !!value.boolVal;
+
           settings.m_linters.push_back(linter);
         }
         RELEASE(node);

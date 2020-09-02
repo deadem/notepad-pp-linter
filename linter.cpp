@@ -94,34 +94,41 @@ unsigned int __stdcall AsyncCheck(void *)
 
   errors.clear();
 
-  std::vector<std::wstring> commands;
+  std::vector<std::pair<std::wstring, bool>> commands;
+  bool useStdin = true;
   for each(const XmlParser::Linter &linter in settings.m_linters)
   {
     if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
     {
-      commands.push_back(linter.m_command);
+      commands.emplace_back(linter.m_command, linter.m_useStdin);
+      useStdin = useStdin && linter.m_useStdin;
     }
   }
 
   if (!commands.empty())
   {
+    const std::string &text = getDocumentText();
+
     File file(GetFilePart(NPPM_GETFILENAME), GetFilePart(NPPM_GETCURRENTDIRECTORY));
-    if (file.write(getDocumentText())) {
-      for each(const std::wstring &command in commands)
+    if (!useStdin && !file.write(text))
+    {
+      showTooltip(L"Temp file write error.");
+      return 0;
+    }
+
+    for each(const auto &command in commands)
+    {
+      //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
+      try
       {
-        //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-        try
-        {
-          std::string xml = file.exec(command);
-          //File::exec(directory, command, file);
-          std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-          errors.insert(errors.end(), parseError.begin(), parseError.end());
-        }
-        catch (Linter::Exception &e)
-        {
-          std::string str(e.what());
-          showTooltip(std::wstring(str.begin(), str.end()));
-        }
+        std::string xml = file.exec(command.first, command.second ? text : std::string());
+        std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+        errors.insert(errors.end(), parseError.begin(), parseError.end());
+      }
+      catch (Linter::Exception &e)
+      {
+        std::string str(e.what());
+        showTooltip(std::wstring(str.begin(), str.end()));
       }
     }
   }

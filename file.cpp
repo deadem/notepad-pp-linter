@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "file.h"
 
-std::string File::exec(std::wstring commandLine)
+std::string File::exec(std::wstring commandLine, const nonstd::optional<std::string> &str)
 {
   std::string result;
 
@@ -56,6 +56,13 @@ std::string File::exec(std::wstring commandLine)
     command.assign(commandLine.begin(), commandLine.end());
 
     throw Linter::Exception("Linter: Can't execute command: " + command);
+  }
+
+  if (str.has_value())
+  {
+    const std::string &value = str.value();
+    DWORD dwRead(value.size()), dwWritten(0);
+    WriteFile(IN_Wr, value.c_str(), dwRead, &dwWritten, nullptr);
   }
 
   CloseHandle(procInfo.hProcess);

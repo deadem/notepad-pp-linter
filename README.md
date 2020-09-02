@@ -23,6 +23,13 @@ A Notepad++ plugin that allows realtime code check against any checkstyle-compat
 </NotepadPlus>
 ```
 
+Optional attribute `stdin`="1" can be used to lint from stdin instead of temp file. i.e: 
+```xml
+  <linter stdin="1" extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\eslint.cmd --stdin --format checkstyle"/>
+```
+
+Optional parameter 
+
 You can change default colors by an optional "style" tag. "color" attribute is a RGB hex color value, "alpha" value can range from 0 (completely transparent) to 255 (no transparency).
 
 ```xml

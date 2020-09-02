@@ -17,6 +17,7 @@ public:
   {
     std::wstring m_extension;
     std::wstring m_command;
+    bool m_useStdin = false;
   };
 
   struct Settings {

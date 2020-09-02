@@ -2,3 +2,4 @@ Debug/
 Release/
 *.db
 *.opendb
+ipch
