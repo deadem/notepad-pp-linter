@@ -1,2 +1,2 @@
-@mkdir bin
-copy /B Release\linter.dll "bin/linter.dll"
+rem @mkdir bin
+rem copy /B Release\linter.dll "bin/linter.dll"
