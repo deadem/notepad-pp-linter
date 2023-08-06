@@ -17,7 +17,7 @@ HANDLE timer(0);
 HANDLE threadHandle(0);
 
 std::vector<XmlParser::Error> errors;
-std::map<int, std::wstring> errorText;
+std::map<LRESULT, std::wstring> errorText;
 XmlParser::Settings settings;
 
 void ClearErrors()
@@ -59,12 +59,12 @@ std::wstring GetFilePart(unsigned int part)
 
 void showTooltip(std::wstring message = std::wstring())
 {
-  int position = SendEditor(SCI_GETCURRENTPOS);
+  LRESULT position = SendEditor(SCI_GETCURRENTPOS);
 
   HWND main = GetParent(getScintillaWindow());
   HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
 
-  std::map<int, std::wstring>::const_iterator error = errorText.find(position);
+  std::map<LRESULT, std::wstring>::const_iterator error = errorText.find(position);
   if (error != errorText.end())
   {
     SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
@@ -147,7 +147,7 @@ void DrawBoxes()
 
   for each(const XmlParser::Error &error in errors)
   {
-    int position = getPositionForLine(error.m_line - 1);
+    LRESULT position = getPositionForLine(error.m_line - 1);
     position += Encoding::utfOffset(getLineText(error.m_line - 1), error.m_column - 1);
     errorText[position] = error.m_message;
     ShowError(position, position + 1);

@@ -1,7 +1,34 @@
 #include "StdAfx.h"
 #include "file.h"
 
-std::string File::exec(std::wstring commandLine, const nonstd::optional<std::string> &str)
+#include <algorithm>
+#include <codecvt>
+#include <limits>
+#include <locale>
+
+void write_file(_In_ HANDLE handle, std::string const& data)
+{
+    //Write the whole of the file in large blocks
+    //FIXME This just assumes everything works.
+    std::size_t to_write = data.size();
+    char const* buff = data.c_str();
+    while (to_write != 0)
+    {
+        DWORD written;
+        WriteFile(
+            handle,
+            buff,
+            static_cast<DWORD>(
+                std::min(to_write, static_cast<std::size_t>(std::numeric_limits<DWORD>::max()))
+            ),
+            &written,
+            nullptr);
+        buff += written;
+        to_write -= written;
+    }
+}
+
+std::string File::exec(std::wstring commandLine, const std::optional<std::string> &str)
 {
   std::string result;
 
@@ -52,17 +79,14 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
   if (!isSuccess)
   {
-    std::string command;
-    command.assign(commandLine.begin(), commandLine.end());
-
+    std::string command = std::wstring_convert<std::codecvt_utf16<wchar_t>>().to_bytes(commandLine);
     throw Linter::Exception("Linter: Can't execute command: " + command);
   }
 
   if (str.has_value())
   {
     const std::string &value = str.value();
-    DWORD dwRead(value.size()), dwWritten(0);
-    WriteFile(IN_Wr, value.c_str(), dwRead, &dwWritten, nullptr);
+    write_file(IN_Wr, value);
   }
 
   CloseHandle(procInfo.hProcess);
@@ -74,11 +98,12 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
   DWORD readBytes;
   std::string buffer;
-  buffer.resize(4096);
+  static const DWORD buffsize = 1024 * 16;
+  buffer.resize(buffsize);
 
   for (;;)
   {
-    isSuccess = ReadFile(OUT_Rd, &buffer[0], buffer.size(), &readBytes, NULL);
+    isSuccess = ReadFile(OUT_Rd, &buffer[0], buffsize, &readBytes, NULL);
     if (!isSuccess || readBytes == 0)
     {
       break;
@@ -118,8 +143,7 @@ bool File::write(const std::string &data)
     return false;
   }
 
-  DWORD bytes(0);
-  WriteFile(fileHandle, &data[0], static_cast<DWORD>(data.size() * sizeof(data[0])), &bytes, 0);
+  write_file(fileHandle, data);
   CloseHandle(fileHandle);
 
   m_file = tempFileName;
