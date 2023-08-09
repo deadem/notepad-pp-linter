@@ -38,6 +38,3 @@ You can change default colors by an optional "style" tag. "color" attribute is a
 ...
 </NotepadPlus>
 ```
-
-Note: 
-VS2015 Redistributable is required: https://www.microsoft.com/en-us/download/details.aspx?id=48145
