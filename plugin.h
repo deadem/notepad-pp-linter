@@ -14,7 +14,7 @@ void pluginCleanUp();
 void commandMenuInit();
 void initConfig();
 
-TCHAR *getIniFileName();
+TCHAR* getIniFileName();
 
 HWND getScintillaWindow();
 LRESULT SendEditor(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0);
