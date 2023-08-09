@@ -61,7 +61,7 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 	if (str.has_value())
 	{
 		const std::string& value = str.value();
-		DWORD dwRead(value.size()), dwWritten(0);
+		DWORD dwRead(static_cast<DWORD>(value.size())), dwWritten(0);
 		WriteFile(IN_Wr, value.c_str(), dwRead, &dwWritten, nullptr);
 	}
 
@@ -78,7 +78,7 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
 	for (;;)
 	{
-		isSuccess = ReadFile(OUT_Rd, &buffer[0], buffer.size(), &readBytes, NULL);
+		isSuccess = ReadFile(OUT_Rd, &buffer[0], static_cast<DWORD>(buffer.size()), &readBytes, NULL);
 		if (!isSuccess || readBytes == 0)
 		{
 			break;
