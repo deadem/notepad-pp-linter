@@ -16,7 +16,7 @@ FuncItem funcItem[FUNCTIONS_COUNT];
 NppData nppData;
 HANDLE timers(0);
 
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD reasonForCall, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD reasonForCall, LPVOID /*lpReserved*/)
 {
     switch (reasonForCall)
     {
@@ -56,7 +56,7 @@ extern "C" __declspec(dllexport) FuncItem *getFuncsArray(int *nbF)
     return funcItem;
 }
 
-extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam)
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT /*Message*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
     return TRUE;
 }
@@ -66,7 +66,7 @@ extern "C" __declspec(dllexport) BOOL isUnicode()
     return TRUE;
 }
 
-void pluginInit(HANDLE hModule)
+void pluginInit(HANDLE /*hModule*/)
 {
     timers = CreateTimerQueue();
 }

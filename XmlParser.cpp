@@ -34,7 +34,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
             throw ::Linter::Exception("Linter: Can't XMLDOMDocument2::put_async");
         }
 
-        std::wstring &string = Encoding::toUnicode(xml);
+        const std::wstring &string = Encoding::toUnicode(xml);
         BSTR bstrValue(const_cast<wchar_t *>(string.c_str()));
 
         short resultCode = FALSE;
@@ -158,16 +158,16 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
             {
                 CComQIPtr<IXMLDOMElement> element(node);
 
-                CComVariant value;
-                if (SUCCEEDED(element->getAttribute(L"alpha", &value)))
+                CComVariant alpha;
+                if (SUCCEEDED(element->getAttribute(L"alpha", &alpha)))
                 {
-                    std::wstringstream data(std::wstring(value.bstrVal ? value.bstrVal : L""));
+                    std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     data >> settings.m_alpha;
                 }
 
-                if (SUCCEEDED(element->getAttribute(L"color", &value)))
+                if (SUCCEEDED(element->getAttribute(L"color", &alpha)))
                 {
-                    std::wstringstream data(std::wstring(value.bstrVal ? value.bstrVal : L""));
+                    std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     unsigned int color(0);
                     data >> std::hex >> color;
 
@@ -208,16 +208,16 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                 if (SUCCEEDED(hr) && element)
                 {
                     Linter linter;
-                    CComVariant value;
+                    CComVariant extension;
 
-                    element->getAttribute(L"extension", &value);
-                    linter.m_extension = value.bstrVal;
+                    element->getAttribute(L"extension", &extension);
+                    linter.m_extension = extension.bstrVal;
 
-                    element->getAttribute(L"command", &value);
-                    linter.m_command = value.bstrVal;
+                    element->getAttribute(L"command", &extension);
+                    linter.m_command = extension.bstrVal;
 
-                    element->getAttribute(L"stdin", &value);
-                    linter.m_useStdin = !!value.boolVal;
+                    element->getAttribute(L"stdin", &extension);
+                    linter.m_useStdin = !!extension.boolVal;
 
                     settings.m_linters.push_back(linter);
                 }
