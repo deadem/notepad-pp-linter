@@ -3,3 +3,4 @@ Release/
 *.db
 *.opendb
 ipch
+.vs/
