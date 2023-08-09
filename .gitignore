@@ -4,3 +4,5 @@ Release/
 *.opendb
 ipch
 .vs/
+*.aps
+linter.vcxproj.user
