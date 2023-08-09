@@ -1,13 +1,13 @@
 version: 0.1.0{build}
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 
 environment:
   matrix:
-  - PlatformToolset: v141_xp
+  - PlatformToolset: v142
     PLATFORM: x64
 
-  - PlatformToolset: v141_xp
+  - PlatformToolset: v142
     PLATFORM: Win32
 
 configuration:
@@ -23,8 +23,8 @@ install:
     - if "%platform%"=="Win32" set platform_input=Win32
 
     - if "%PlatformToolset%"=="v141_xp" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
-    - if "%PlatformToolset%"=="v140_xp" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
     - if "%PlatformToolset%"=="v142"    call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v143"    call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
 
 build_script:
     - cd "%APPVEYOR_BUILD_FOLDER%"
@@ -42,7 +42,7 @@ after_build:
             Push-AppveyorArtifact "$env:CONFIGURATION\linter.dll" -FileName linter.dll
         }
 
-        if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:CONFIGURATION -eq "Release" -and $env:PLATFORMTOOLSET -eq "v141_xp") {
+        if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:CONFIGURATION -eq "Release" -and $env:PLATFORMTOOLSET -eq "v142") {
             if($env:PLATFORM_INPUT -eq "x64"){
                 $ZipFileName = "linter_$($env:APPVEYOR_REPO_TAG_NAME)_x64.zip"
                 7z a $ZipFileName "$($env:APPVEYOR_BUILD_FOLDER)\$env:PLATFORM_INPUT\$env:CONFIGURATION\*.dll"
@@ -67,5 +67,5 @@ after_build:
     # force_update: true
     # on:
         # appveyor_repo_tag: true
-        # PlatformToolset: v141_xp
+        # PlatformToolset: v142
         # configuration: Release
