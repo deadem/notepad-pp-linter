@@ -53,9 +53,7 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
   if (!isSuccess)
   {
-    //C++11 format converter
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-    std::string command = convert.to_bytes(commandLine);
+    std::string command{ std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(commandLine) };
 
     throw Linter::Exception("Linter: Can't execute command: " + command);
   }
@@ -63,7 +61,7 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
   if (str.has_value())
   {
     const std::string &value = str.value();
-    DWORD dwRead(static_cast<DWORD>(value.size())), dwWritten(0);
+    DWORD dwRead(value.size()), dwWritten(0);
     WriteFile(IN_Wr, value.c_str(), dwRead, &dwWritten, nullptr);
   }
 
@@ -80,7 +78,7 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
   for (;;)
   {
-    isSuccess = ReadFile(OUT_Rd, &buffer[0], static_cast<DWORD>(buffer.size()), &readBytes, NULL);
+    isSuccess = ReadFile(OUT_Rd, &buffer[0], buffer.size(), &readBytes, NULL);
     if (!isSuccess || readBytes == 0)
     {
       break;
