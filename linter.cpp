@@ -59,7 +59,7 @@ std::wstring GetFilePart(unsigned int part)
 
 void showTooltip(std::wstring message = std::wstring())
 {
-    const int position = static_cast<int>(SendEditor(static_cast<UINT>(SCI_GETCURRENTPOS)));
+    const LRESULT position = SendEditor(SCI_GETCURRENTPOS);
 
     HWND main = GetParent(getScintillaWindow());
     HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);

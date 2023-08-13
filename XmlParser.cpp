@@ -16,7 +16,6 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 {
     std::vector<XmlParser::Error> errors;
     IXMLDOMNodeList *XMLNodeList(NULL);
-    IXMLDOMNode *XMLNode(NULL);
     IXMLDOMDocument2 *XMLDocument(NULL);
     HRESULT hr;
 
@@ -37,7 +36,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         const std::wstring &string = Encoding::toUnicode(xml);
         BSTR bstrValue(bstr_t(string.c_str()));
 
-        short resultCode = FALSE;
+        VARIANT_BOOL resultCode = FALSE;
         hr = XMLDocument->loadXML(bstrValue, &resultCode);
         if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
         {
@@ -50,6 +49,8 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //error");
         }
+
+        //Why do we need unlength if we're using nextNode?
         LONG uLength;
 
         hr = XMLNodeList->get_length(&uLength);
@@ -88,19 +89,12 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         RELEASE(XMLNodeList);
         RELEASE(XMLDocument);
     }
-    catch (::Linter::Exception &)
+    catch (std::exception const &)
     {
-        RELEASE(XMLNode);
         RELEASE(XMLDocument);
         RELEASE(XMLNodeList);
 
         throw;
-    }
-    catch (...)
-    {
-        RELEASE(XMLNode);
-        RELEASE(XMLDocument);
-        RELEASE(XMLNodeList);
     }
 
     return errors;
@@ -110,7 +104,6 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
 {
     XmlParser::Settings settings;
     IXMLDOMNodeList *XMLNodeList(NULL), *styleNode(NULL);
-    IXMLDOMNode *XMLNode(NULL);
     IXMLDOMDocument2 *XMLDocument(NULL);
     HRESULT hr;
     LONG uLength;
@@ -132,11 +125,12 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         BSTR bstrValue(bstr_t(file.c_str()));
         CComVariant value(bstrValue);
 
-        short resultCode = FALSE;
-        hr = XMLDocument->load(value, &resultCode);
-        if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
-        {
-            throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
+            short resultCode = FALSE;
+            hr = XMLDocument->load(value, &resultCode);
+            if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
+            {
+                throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
+            }
         }
 
         hr = XMLDocument->selectNodes(bstr_t(L"//style"), &styleNode);
@@ -145,12 +139,14 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
             throw ::Linter::Exception("Linter: Can't execute XPath //style");
         }
 
+        //Why do we need to get the length if we're going to use nextNode?
         hr = styleNode->get_length(&uLength);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't get XPath root length");
         }
-        else if (uLength)
+
+        if (uLength)
         {
             IXMLDOMNode *node;
             hr = styleNode->nextNode(&node);
@@ -161,15 +157,23 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                 CComVariant alpha;
                 if (element->getAttribute(bstr_t(L"alpha"), &alpha) == S_OK)
                 {
-                    std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
-                    data >> settings.m_alpha;
+                    int alpha = 0;
+                    if (value.bstrVal)
+                    {
+                        std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
+                        data >> alpha;
+                    }
+                    settings.m_alpha = 0;
                 }
 
                 if (element->getAttribute(bstr_t(L"color"), &alpha) == S_OK)
                 {
-                    std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     unsigned int color(0);
-                    data >> std::hex >> color;
+                    if (value.bstrVal)
+                    {
+                        std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
+                        data >> std::hex >> color;
+                    }
 
                     // reverse colors for scintilla's LE order
                     settings.m_color = color & 0xFF;
@@ -192,6 +196,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
             throw ::Linter::Exception("Linter: Can't execute XPath //linter");
         }
 
+        //Why do we need to get the length if we're going to use nextNode?
         hr = XMLNodeList->get_length(&uLength);
         if (!SUCCEEDED(hr))
         {
@@ -202,13 +207,11 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         {
             IXMLDOMNode *node;
             hr = XMLNodeList->nextNode(&node);
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr) && node != nullptr)
             {
                 CComQIPtr<IXMLDOMElement> element(node);
-                if (SUCCEEDED(hr) && element)
-                {
-                    Linter linter;
-                    CComVariant extension;
+                Linter linter;
+                CComVariant extension;
 
                     element->getAttribute(bstr_t(L"extension"), &extension);
                     linter.m_extension = extension.bstrVal;
@@ -219,27 +222,18 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                     element->getAttribute(bstr_t(L"stdin"), &extension);
                     linter.m_useStdin = !!extension.boolVal;
 
-                    settings.m_linters.push_back(linter);
-                }
+                settings.m_linters.push_back(linter);
                 RELEASE(node);
             }
         }
         RELEASE(XMLNodeList);
         RELEASE(XMLDocument);
     }
-    catch (::Linter::Exception &)
+    catch (std::exception const &)
     {
-        RELEASE(XMLNode);
         RELEASE(XMLDocument);
         RELEASE(XMLNodeList);
-
         throw;
-    }
-    catch (...)
-    {
-        RELEASE(XMLNode);
-        RELEASE(XMLDocument);
-        RELEASE(XMLNodeList);
     }
 
     return settings;
