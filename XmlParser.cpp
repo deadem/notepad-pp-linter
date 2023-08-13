@@ -125,7 +125,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         BSTR bstrValue(bstr_t(file.c_str()));
         CComVariant value(bstrValue);
 
-            short resultCode = FALSE;
+            VARIANT_BOOL resultCode = FALSE;
             hr = XMLDocument->load(value, &resultCode);
             if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
             {

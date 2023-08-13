@@ -110,10 +110,18 @@ unsigned int __stdcall AsyncCheck(void *)
         const std::string &text = getDocumentText();
 
         File file(GetFilePart(NPPM_GETFILENAME), GetFilePart(NPPM_GETCURRENTDIRECTORY));
-        if (!useStdin && !file.write(text))
+        if (!useStdin)
         {
-            showTooltip(L"Temp file write error.");
-            return 0;
+            try
+            {
+                file.write(text);
+            }
+            catch (std::exception const &e)
+            {
+                std::string const str{e.what()};
+                showTooltip(L"Temp file write error:" + std::wstring(str.begin(), str.end()));
+                return 0;
+            }
         }
 
         for (const auto &command : commands)
@@ -121,14 +129,19 @@ unsigned int __stdcall AsyncCheck(void *)
             //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
             try
             {
-                std::string xml = file.exec(command.first, command.second ? text : std::string());
+                nonstd::optional<std::string> str;
+                if (command.second)
+                {
+                    str = text;
+                }
+                std::string xml = file.exec(command.first, str);
                 std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
                 errors.insert(errors.end(), parseError.begin(), parseError.end());
             }
-            catch (Linter::Exception &e)
+            catch (std::exception const &e)
             {
                 std::string str(e.what());
-                showTooltip(std::wstring(str.begin(), str.end()));
+                showTooltip(L"Failed to run command:" + std::wstring(str.begin(), str.end()));
             }
         }
     }
@@ -190,7 +203,7 @@ void initLinters()
             showTooltip(L"Linter: Empty linters.xml.");
         }
     }
-    catch (Linter::Exception &e)
+    catch (std::exception const &e)
     {
         std::string str(e.what());
         showTooltip(std::wstring(str.begin(), str.end()));
@@ -252,6 +265,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             isBufferChanged = true;
             Check();
             break;
+
         case SCN_MODIFIED:
             if (notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT))
             {
@@ -269,9 +283,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             //OutputDebugString(debug);
         }
         break;
+
         case SCN_UPDATEUI:
             showTooltip();
             break;
+
         case SCN_PAINTED:
         case SCN_FOCUSIN:
         case SCN_FOCUSOUT:
