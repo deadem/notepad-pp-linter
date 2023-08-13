@@ -96,7 +96,7 @@ unsigned int __stdcall AsyncCheck(void *)
 
     std::vector<std::pair<std::wstring, bool>> commands;
     bool useStdin = true;
-    for each (const XmlParser::Linter &linter in settings.m_linters)
+    for (const XmlParser::Linter &linter : settings.m_linters)
     {
         if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
         {
@@ -116,7 +116,7 @@ unsigned int __stdcall AsyncCheck(void *)
             return 0;
         }
 
-        for each (const auto &command in commands)
+        for (const auto &command : commands)
         {
             //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
             try
@@ -145,7 +145,7 @@ void DrawBoxes()
         InitErrors();
     }
 
-    for each (const XmlParser::Error &error in errors)
+    for (const XmlParser::Error &error : errors)
     {
         int position = static_cast<int>(getPositionForLine(error.m_line - 1));
         position += Encoding::utfOffset(getLineText(error.m_line - 1), error.m_column - 1);
@@ -158,7 +158,7 @@ VOID CALLBACK RunThread(PVOID /*lpParam*/, BOOLEAN /*TimerOrWaitFired*/)
 {
     if (threadHandle == 0)
     {
-        for each (const XmlParser::Linter &linter in settings.m_linters)
+        for (const XmlParser::Linter &linter : settings.m_linters)
         {
             if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
             {

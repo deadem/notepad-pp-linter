@@ -45,7 +45,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         }
 
         // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
-        hr = XMLDocument->selectNodes(_T("//error"), &XMLNodeList);
+        hr = XMLDocument->selectNodes(bstr_t(L"//error"), &XMLNodeList);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //error");
@@ -73,13 +73,13 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
             Error error;
             CComVariant value;
 
-            element->getAttribute(L"line", &value);
+            element->getAttribute(bstr_t(L"line"), &value);
             error.m_line = _wtoi(value.bstrVal);
 
-            element->getAttribute(L"column", &value);
+            element->getAttribute(bstr_t(L"column"), &value);
             error.m_column = _wtoi(value.bstrVal);
 
-            element->getAttribute(L"message", &value);
+            element->getAttribute(bstr_t(L"message"), &value);
             error.m_message = value.bstrVal;
 
             errors.push_back(error);
@@ -139,7 +139,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
             throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
         }
 
-        hr = XMLDocument->selectNodes(_T("//style"), &styleNode);
+        hr = XMLDocument->selectNodes(bstr_t("//style"), &styleNode);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //style");
@@ -159,13 +159,13 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                 CComQIPtr<IXMLDOMElement> element(node);
 
                 CComVariant alpha;
-                if (SUCCEEDED(element->getAttribute(L"alpha", &alpha)))
+                if (SUCCEEDED(element->getAttribute(bstr_t(L"alpha"), &alpha)))
                 {
                     std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     data >> settings.m_alpha;
                 }
 
-                if (SUCCEEDED(element->getAttribute(L"color", &alpha)))
+                if (SUCCEEDED(element->getAttribute(bstr_t(L"color"), &alpha)))
                 {
                     std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     unsigned int color(0);
@@ -186,7 +186,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         }
 
         // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
-        hr = XMLDocument->selectNodes(_T("//linter"), &XMLNodeList);
+        hr = XMLDocument->selectNodes(bstr_t(L"//linter"), &XMLNodeList);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //linter");
@@ -210,13 +210,13 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                     Linter linter;
                     CComVariant extension;
 
-                    element->getAttribute(L"extension", &extension);
+                    element->getAttribute(bstr_t(L"extension"), &extension);
                     linter.m_extension = extension.bstrVal;
 
-                    element->getAttribute(L"command", &extension);
+                    element->getAttribute(bstr_t(L"command"), &extension);
                     linter.m_command = extension.bstrVal;
 
-                    element->getAttribute(L"stdin", &extension);
+                    element->getAttribute(bstr_t(L"stdin"), &extension);
                     linter.m_useStdin = !!extension.boolVal;
 
                     settings.m_linters.push_back(linter);
