@@ -35,7 +35,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         }
 
         const std::wstring &string = Encoding::toUnicode(xml);
-        BSTR bstrValue(const_cast<wchar_t *>(string.c_str()));
+        BSTR bstrValue(bstr_t(string.c_str()));
 
         short resultCode = FALSE;
         hr = XMLDocument->loadXML(bstrValue, &resultCode);
@@ -129,7 +129,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
             throw ::Linter::Exception("Linter: XMLDOMDocument2::put_async error.");
         }
 
-        BSTR bstrValue(const_cast<wchar_t *>(file.c_str()));
+        BSTR bstrValue(bstr_t(file.c_str()));
         CComVariant value(bstrValue);
 
         short resultCode = FALSE;

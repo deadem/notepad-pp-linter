@@ -17,7 +17,7 @@ HANDLE timer(0);
 HANDLE threadHandle(0);
 
 std::vector<XmlParser::Error> errors;
-std::map<int, std::wstring> errorText;
+std::map<LRESULT, std::wstring> errorText;
 XmlParser::Settings settings;
 
 void ClearErrors()
@@ -64,7 +64,7 @@ void showTooltip(std::wstring message = std::wstring())
     HWND main = GetParent(getScintillaWindow());
     HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
 
-    std::map<int, std::wstring>::const_iterator error = errorText.find(position);
+    auto error = errorText.find(position);
     if (error != errorText.end())
     {
         SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
@@ -90,7 +90,7 @@ void showTooltip(std::wstring message = std::wstring())
 
 unsigned int __stdcall AsyncCheck(void *)
 {
-    CoInitialize(NULL);
+    (void)CoInitialize(NULL);
 
     errors.clear();
 
@@ -147,7 +147,7 @@ void DrawBoxes()
 
     for (const XmlParser::Error &error : errors)
     {
-        int position = static_cast<int>(getPositionForLine(error.m_line - 1));
+        auto position = getPositionForLine(error.m_line - 1);
         position += Encoding::utfOffset(getLineText(error.m_line - 1), error.m_column - 1);
         errorText[position] = error.m_message;
         ShowError(position, position + 1);
@@ -175,7 +175,7 @@ void Check()
 {
     if (isChanged)
     {
-        DeleteTimerQueueTimer(timers, timer, NULL);
+        (void)DeleteTimerQueueTimer(timers, timer, NULL);
         CreateTimerQueueTimer(&timer, timers, (WAITORTIMERCALLBACK)RunThread, NULL, 300, 0, 0);
     }
 }
