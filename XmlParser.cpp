@@ -139,7 +139,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
             throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
         }
 
-        hr = XMLDocument->selectNodes(bstr_t("//style"), &styleNode);
+        hr = XMLDocument->selectNodes(bstr_t(L"//style"), &styleNode);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //style");

@@ -17,8 +17,7 @@
 #include <atlbase.h>
 #include <atlstr.h>
 #include <ATLCom.h>
-#pragma comment(lib, "comsuppw.lib")
-#include <comutil.h>
+#include <comdef.h>
 #include <exception>
 #include <string>
 #include <sstream>
