@@ -12,11 +12,12 @@
 #include <windows.h>
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS    // some CString constructors will be explicit
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 #include <atlbase.h>
 #include <atlstr.h>
 #include <ATLCom.h>
-#include <comutil.h>
+#include <comdef.h>
 #include <exception>
 #include <string>
 #include <sstream>

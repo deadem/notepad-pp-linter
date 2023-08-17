@@ -17,7 +17,7 @@ HANDLE timer(0);
 HANDLE threadHandle(0);
 
 std::vector<XmlParser::Error> errors;
-std::map<int, std::wstring> errorText;
+std::map<LRESULT, std::wstring> errorText;
 XmlParser::Settings settings;
 
 void ClearErrors()
@@ -64,7 +64,7 @@ void showTooltip(std::wstring message = std::wstring())
     HWND main = GetParent(getScintillaWindow());
     HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
 
-    std::map<int, std::wstring>::const_iterator error = errorText.find(position);
+    auto error = errorText.find(position);
     if (error != errorText.end())
     {
         SendMessage(childHandle, WM_SETTEXT, 0, reinterpret_cast<LPARAM>((std::wstring(L" - ") + error->second).c_str()));
@@ -90,13 +90,13 @@ void showTooltip(std::wstring message = std::wstring())
 
 unsigned int __stdcall AsyncCheck(void *)
 {
-    CoInitialize(NULL);
+    (void)CoInitialize(NULL);
 
     errors.clear();
 
     std::vector<std::pair<std::wstring, bool>> commands;
     bool useStdin = true;
-    for each (const XmlParser::Linter &linter in settings.m_linters)
+    for (const XmlParser::Linter &linter : settings.m_linters)
     {
         if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
         {
@@ -116,7 +116,7 @@ unsigned int __stdcall AsyncCheck(void *)
             return 0;
         }
 
-        for each (const auto &command in commands)
+        for (const auto &command : commands)
         {
             //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
             try
@@ -145,9 +145,9 @@ void DrawBoxes()
         InitErrors();
     }
 
-    for each (const XmlParser::Error &error in errors)
+    for (const XmlParser::Error &error : errors)
     {
-        int position = static_cast<int>(getPositionForLine(error.m_line - 1));
+        auto position = getPositionForLine(error.m_line - 1);
         position += Encoding::utfOffset(getLineText(error.m_line - 1), error.m_column - 1);
         errorText[position] = error.m_message;
         ShowError(position, position + 1);
@@ -158,7 +158,7 @@ VOID CALLBACK RunThread(PVOID /*lpParam*/, BOOLEAN /*TimerOrWaitFired*/)
 {
     if (threadHandle == 0)
     {
-        for each (const XmlParser::Linter &linter in settings.m_linters)
+        for (const XmlParser::Linter &linter : settings.m_linters)
         {
             if (GetFilePart(NPPM_GETEXTPART) == linter.m_extension)
             {
@@ -175,7 +175,7 @@ void Check()
 {
     if (isChanged)
     {
-        DeleteTimerQueueTimer(timers, timer, NULL);
+        (void)DeleteTimerQueueTimer(timers, timer, NULL);
         CreateTimerQueueTimer(&timer, timers, (WAITORTIMERCALLBACK)RunThread, NULL, 300, 0, 0);
     }
 }
