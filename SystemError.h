@@ -47,11 +47,11 @@ namespace Linter
 
         virtual char const *what() const noexcept
         {
-            return &buff[0];
+            return &buff_[0];
         }
 
       private:
-        char buff[2048];
+        char buff_[2048];
     };
 
 }    // namespace Linter

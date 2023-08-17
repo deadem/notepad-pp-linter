@@ -47,8 +47,8 @@ namespace Linter
     )
     {
         // Note: Technically, the message function could fail.
-        snprintf(buff,
-            sizeof(buff),
+        std::snprintf(buff_,
+            sizeof(buff_),
 #if __cplusplus >= 202002L
             "%s %d: "
 #endif
@@ -68,8 +68,8 @@ namespace Linter
     )
     {
         // Note: Technically, the message function could fail.
-        snprintf(buff,
-            sizeof(buff),
+        std::snprintf(buff_,
+            sizeof(buff_),
 #if __cplusplus >= 202002L
             "%s %d: "
 #endif

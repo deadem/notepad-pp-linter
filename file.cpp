@@ -14,7 +14,7 @@ namespace
     class HandleWrapper
     {
       public:
-        HandleWrapper(HANDLE h) : handle_(h)
+        explicit HandleWrapper(HANDLE h) : handle_(h)
         {
             if (h == INVALID_HANDLE_VALUE)
             {
