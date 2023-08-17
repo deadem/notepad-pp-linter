@@ -1,6 +1,8 @@
 #pragma once
 #include <exception>
+#if __cplusplus >= 202002L
 #include <source_location>
+#endif
 #include <string>
 
 #include <wtypes.h>
