@@ -27,7 +27,7 @@ namespace Linter
 #endif
         );
 
-        /** Creates an except object given a system error number */
+        /** Creates an exception object given a system error number */
         explicit SystemError(DWORD err
 #if __cplusplus >= 202002L
             ,
@@ -37,6 +37,22 @@ namespace Linter
 
         /** Creates an exception object from specified error with addition information string */
         SystemError(DWORD err, std::string const &
+#if __cplusplus >= 202002L
+            ,
+            std::source_location location = std::source_location::current()
+#endif
+        );
+
+        /** Creates an exception object given an HRESULT */
+        explicit SystemError(HRESULT err
+#if __cplusplus >= 202002L
+            ,
+            std::source_location location = std::source_location::current()
+#endif
+        );
+
+        /** Creates an exception object from specified error with addition information string */
+        SystemError(HRESULT err, std::string const &
 #if __cplusplus >= 202002L
             ,
             std::source_location location = std::source_location::current()
