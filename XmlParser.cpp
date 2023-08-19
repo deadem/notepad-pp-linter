@@ -11,13 +11,6 @@
 #include <msxml6.h>
 #pragma comment(lib, "msxml6.lib")
 
-#define RELEASE(iface)    \
-    if (iface)            \
-    {                     \
-        iface->Release(); \
-        iface = NULL;     \
-    }
-
 std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 {
     ::Linter::DomDocument XMLDocument;
@@ -29,7 +22,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 
     CComPtr<IXMLDOMNodeList> XMLNodeList{XMLDocument.get_nodelist("//error")};
 
-    //Why do we need unlength if we're using nextNode?
+    //Why do we need uLength if we're using nextNode?
     LONG uLength;
     HRESULT hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
@@ -64,7 +57,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
     return errors;
 }
 
-XmlParser::Settings XmlParser::getLinters(std::wstring file)
+XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
 {
     XmlParser::Settings settings;
     ::Linter::DomDocument XMLDocument;

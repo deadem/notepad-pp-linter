@@ -8,17 +8,6 @@
 
 namespace Linter
 {
-
-    template <class T>
-    struct Destroyer
-    {
-        void operator()(T *iface)
-        {
-            iface->Release();
-        }
-    };
-
-
     class DomDocument
     {
       public:
@@ -32,20 +21,13 @@ namespace Linter
 
         ~DomDocument();
 
-        //Klunky? Remove it
-        IXMLDOMDocument2 *operator->()
-        {
-            return document_.get();
-        }
-
+        /** Get list of nodes select by an XPATH */
         CComPtr<IXMLDOMNodeList> get_nodelist(std::string const &xpath);
 
       private:
         void check_load_results(VARIANT_BOOL resultcode, HRESULT hr);
 
-        //Replace this once I have moved selectnodes into here
-        std::unique_ptr<IXMLDOMDocument2, Destroyer<IXMLDOMDocument2>> document_;
-        //CComPtr<IXMLDOMDocument2> document_;
+        CComPtr<IXMLDOMDocument2> document_;
     };
 
 }    // namespace Linter

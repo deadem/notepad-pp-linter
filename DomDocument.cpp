@@ -17,7 +17,7 @@ namespace Linter
         {
             throw ::Linter::SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
         }
-        document_.reset(tmp);
+        document_ = tmp;
 
         hr = document_->put_async(VARIANT_FALSE);
         if (!SUCCEEDED(hr))
@@ -25,8 +25,6 @@ namespace Linter
             throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
         }
     }
-
-    /** Creates an XML document from the supplied filename */
 
     void DomDocument::load_from_file(std::wstring const &filename)
     {
@@ -38,8 +36,6 @@ namespace Linter
 
         check_load_results(resultCode, hr);
     }
-
-    /** Creates an XML document from the supplied UTF8 string */
 
     void DomDocument::load_from_string(std::string const &xml)
     {
