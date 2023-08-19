@@ -39,6 +39,9 @@
     <ClCompile Include="SystemError.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DomDocument.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="encoding.h">
@@ -78,6 +81,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SystemError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DomDocument.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

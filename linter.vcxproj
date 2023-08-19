@@ -171,6 +171,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DomDocument.cpp" />
     <ClCompile Include="encoding.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="linter.cpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="XmlParser.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DomDocument.h" />
     <ClInclude Include="encoding.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="linter.h" />

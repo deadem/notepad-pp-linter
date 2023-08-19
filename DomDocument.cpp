@@ -1,0 +1,87 @@
+#include "stdafx.h"
+#include "DomDocument.h"
+
+#include "SystemError.h"
+
+namespace Linter
+{
+
+    DomDocument::DomDocument()
+    {
+        IXMLDOMDocument2 *tmp = nullptr;
+        HRESULT hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)&tmp);
+        if (!SUCCEEDED(hr))
+        {
+            throw ::Linter::SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
+        }
+        document_.reset(tmp);
+
+        hr = document_->put_async(VARIANT_FALSE);
+        if (!SUCCEEDED(hr))
+        {
+            throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
+        }
+    }
+
+    /** Creates an XML document from the supplied filename */
+
+    void DomDocument::load_from_file(std::wstring const &filename)
+    {
+        BSTR bstrValue{bstr_t(filename.c_str())};
+        CComVariant value(bstrValue);
+
+        VARIANT_BOOL resultCode = FALSE;
+        HRESULT hr = document_->load(value, &resultCode);
+
+        check_load_results(resultCode, hr);
+    }
+
+    /** Creates an XML document from the supplied UTF8 string */
+
+    void DomDocument::load_from_string(std::string const &xml)
+    {
+        //std::wstring string = Encoding::toUnicode(xml);
+        BSTR bstrValue{(bstr_t(xml.c_str()))};
+
+        VARIANT_BOOL resultCode = FALSE;
+        HRESULT hr = document_->loadXML(bstrValue, &resultCode);
+
+        check_load_results(resultCode, hr);
+    }
+
+    DomDocument::~DomDocument()
+    {
+    }
+
+    void DomDocument::check_load_results(VARIANT_BOOL resultcode, HRESULT hr)
+    {
+        if (!SUCCEEDED(hr))
+        {
+            throw ::Linter::SystemError(hr);
+        }
+        if (resultcode != VARIANT_TRUE)
+        {
+            CComPtr<IXMLDOMParseError> error;
+            (void)document_->get_parseError(&error);
+
+            if (error)
+            {
+                BSTR reason;
+                error->get_reason(&reason);
+                long line;
+                error->get_line(&line);
+                long column;
+                error->get_linepos(&column);
+                char buff[256];
+                std::snprintf(buff,
+                    sizeof(buff),
+                    "Invalid XML in linter.xml at line %d col %d: %s",
+                    line,
+                    column,
+                    static_cast<std::string>(static_cast<bstr_t>(reason)).c_str());
+                throw std::runtime_error(buff);
+            }
+        }
+    }
+
+}    // namespace Linter
