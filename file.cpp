@@ -4,6 +4,7 @@
 #include "HandleWrapper.h"
 #include "SystemError.h"
 
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <codecvt>
 
 using ::Linter::HandleWrapper;
@@ -55,7 +56,7 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
     {
         DWORD const error{GetLastError()};
         std::string command{std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(commandLine)};
-        throw SystemError(error, "Linter: Can't execute command: " + command);
+        throw SystemError(error, "Can't execute command: " + command);
     }
 
     if (str.has_value())

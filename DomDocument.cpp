@@ -14,13 +14,13 @@ namespace Linter
         HRESULT hr = document_.CoCreateInstance(__uuidof(DOMDocument));
         if (!SUCCEEDED(hr))
         {
-            throw SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
+            throw SystemError(hr, "Can't create IID_IXMLDOMDocument2");
         }
 
         hr = document_->put_async(VARIANT_FALSE);
         if (!SUCCEEDED(hr))
         {
-            throw SystemError("Linter: Can't XMLDOMDocument2::put_async");
+            throw SystemError("Can't XMLDOMDocument2::put_async");
         }
     }
 
@@ -55,7 +55,7 @@ namespace Linter
         HRESULT hr = document_->selectNodes(bstr_t(xpath.c_str()), &nodes);
         if (!SUCCEEDED(hr))
         {
-            throw SystemError(hr, "Linter: Can't execute XPath " + xpath);
+            throw SystemError(hr, "Can't execute XPath " + xpath);
         }
         return nodes;
     }

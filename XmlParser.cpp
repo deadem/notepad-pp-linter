@@ -29,7 +29,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
     HRESULT hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
-        throw SystemError(hr, "Linter: Can't get XPath //error length");
+        throw SystemError(hr, "Can't get XPath //error length");
     }
     for (int iIndex = 0; iIndex < uLength; iIndex++)
     {
@@ -37,7 +37,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         hr = XMLNodeList->nextNode(&node);
         if (!SUCCEEDED(hr))
         {
-            throw SystemError(hr, "Linter: Can't get next XPath element");
+            throw SystemError(hr, "Can't get next XPath element");
         }
 
         CComQIPtr<IXMLDOMElement> element(node);
@@ -72,7 +72,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
     HRESULT hr = styleNode->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
-        throw SystemError(hr, "Linter: Can't get XPath style length");
+        throw SystemError(hr, "Can't get XPath style length");
     }
 
     if (uLength != 0)
@@ -81,7 +81,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
         hr = styleNode->nextNode(&node);
         if (!SUCCEEDED(hr))
         {
-            throw SystemError(hr, "Linter: Can't read style node");
+            throw SystemError(hr, "Can't read style node");
         }
         CComQIPtr<IXMLDOMElement> element(node);
         CComVariant value;
@@ -125,7 +125,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
     hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
-        throw SystemError(hr, "Linter: Can't get XPath length");
+        throw SystemError(hr, "Can't get XPath length");
     }
 
     for (int iIndex = 0; iIndex < uLength; iIndex++)

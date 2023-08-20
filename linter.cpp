@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "plugin.h"
 #include "linter.h"
+
+#include "plugin.h"
 #include "XmlParser.h"
 #include "encoding.h"
 #include "file.h"
@@ -119,7 +120,7 @@ unsigned int __stdcall AsyncCheck(void *)
             catch (std::exception const &e)
             {
                 std::string const str{e.what()};
-                showTooltip(L"Temp file write error:" + std::wstring(str.begin(), str.end()));
+                showTooltip(L"Linter: Temp file write error:" + std::wstring(str.begin(), str.end()));
                 return 0;
             }
         }
@@ -141,7 +142,7 @@ unsigned int __stdcall AsyncCheck(void *)
             catch (std::exception const &e)
             {
                 std::string str(e.what());
-                showTooltip(L"Failed to run command: " + std::wstring(str.begin(), str.end()));
+                showTooltip(L"Linter: " + std::wstring(str.begin(), str.end()));
             }
         }
     }
@@ -206,7 +207,7 @@ void initLinters()
     catch (std::exception const &e)
     {
         std::string str(e.what());
-        showTooltip(std::wstring(str.begin(), str.end()));
+        showTooltip(L"Linter: " + std::wstring(str.begin(), str.end()));
     }
 }
 
