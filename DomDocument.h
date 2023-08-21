@@ -25,7 +25,7 @@ namespace Linter
         CComPtr<IXMLDOMNodeList> get_nodelist(std::string const &xpath);
 
       private:
-        void check_load_results(VARIANT_BOOL resultcode, HRESULT hr);
+        void check_load_results(VARIANT_BOOL resultcode, HRESULT hr, std::string const & filename);
 
         CComPtr<IXMLDOMDocument2> document_;
     };

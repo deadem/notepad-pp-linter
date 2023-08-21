@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include <msxml6.h>
-#pragma comment(lib, "msxml6.lib")
 
 using Linter::SystemError;
 

@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "DomDocument.h"
 
+#include "encoding.h"
 #include "SystemError.h"
 
+#include <sstream>
 #include <stdexcept>
 
 #pragma comment(lib, "msxml6.lib")
@@ -32,7 +34,7 @@ namespace Linter
         VARIANT_BOOL resultCode = FALSE;
         HRESULT hr = document_->load(value, &resultCode);
 
-        check_load_results(resultCode, hr);
+        check_load_results(resultCode, hr, Encoding::toUTF(filename));
     }
 
     void DomDocument::load_from_string(std::string const &xml)
@@ -42,7 +44,7 @@ namespace Linter
         VARIANT_BOOL resultCode = FALSE;
         HRESULT hr = document_->loadXML(bstrValue, &resultCode);
 
-        check_load_results(resultCode, hr);
+        check_load_results(resultCode, hr, "temporary linter output file");
     }
 
     DomDocument::~DomDocument()
@@ -60,7 +62,7 @@ namespace Linter
         return nodes;
     }
 
-    void DomDocument::check_load_results(VARIANT_BOOL resultcode, HRESULT hr)
+    void DomDocument::check_load_results(VARIANT_BOOL resultcode, HRESULT hr, std::string const & filename)
     {
         if (!SUCCEEDED(hr))
         {
@@ -73,20 +75,19 @@ namespace Linter
 
             if (error)
             {
+                BSTR text;
+                error->get_srcText(&text);
                 BSTR reason;
                 error->get_reason(&reason);
                 long line;
                 error->get_line(&line);
                 long column;
                 error->get_linepos(&column);
-                char buff[256];
-                std::snprintf(buff,
-                    sizeof(buff),
-                    "Invalid XML in linter.xml at line %d col %d: %s",
-                    line,
-                    column,
-                    static_cast<std::string>(static_cast<bstr_t>(reason)).c_str());
-                throw std::runtime_error(buff);
+                std::ostringstream buff;
+                buff << "Invalid XML in " << filename << " at line " << line << " col " << column << " (near "
+                     << static_cast<std::string>(static_cast<bstr_t>(text)) << "): " << 
+                    static_cast<std::string>(static_cast<bstr_t>(reason));
+                throw std::runtime_error(buff.str());
             }
         }
     }
