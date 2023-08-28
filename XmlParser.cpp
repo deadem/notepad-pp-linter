@@ -1,9 +1,16 @@
 #include "stdafx.h"
 #include "XmlParser.h"
+
+#include "SystemError.h"
 #include "encoding.h"
+
+#include <memory>
 
 #include <msxml6.h>
 #pragma comment(lib, "msxml6.lib")
+
+namespace
+{
 
 #define RELEASE(iface)    \
     if (iface)            \
@@ -12,89 +19,102 @@
         iface = NULL;     \
     }
 
-std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
-{
-    std::vector<XmlParser::Error> errors;
-    IXMLDOMNodeList *XMLNodeList(NULL);
-    IXMLDOMDocument2 *XMLDocument(NULL);
-    HRESULT hr;
-
-    try
+    template <class T>
+    struct Destroyer
     {
-        hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)(&XMLDocument));
-        if (!SUCCEEDED(hr) || !XMLDocument)
+        void operator()(T *iface)
         {
-            throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
+            iface->Release();
+        }
+    };
+
+    /** It is slightly annoying that there is a wodge of common code for dealing with XML, and the only difference
+     * is whether it loads from a string or a file.
+     *
+     * Should possibly pass a lambda
+     */
+    std::unique_ptr<IXMLDOMDocument2, Destroyer<IXMLDOMDocument2>> create_xml_document()
+    {
+        std::unique_ptr<IXMLDOMDocument2, Destroyer<IXMLDOMDocument2>> XMLDocument;
+        {
+            IXMLDOMDocument2 *tmp = nullptr;
+            HRESULT hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)&tmp);
+            if (!SUCCEEDED(hr))
+            {
+                throw ::Linter::SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
+            }
+            XMLDocument.reset(tmp);
         }
 
-        hr = XMLDocument->put_async(VARIANT_FALSE);
+        HRESULT hr = XMLDocument->put_async(VARIANT_FALSE);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't XMLDOMDocument2::put_async");
+            throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
         }
+        return XMLDocument;
+    }
 
-        const std::wstring &string = Encoding::toUnicode(xml);
-        BSTR bstrValue(bstr_t(string.c_str()));
+}    // namespace
 
-        VARIANT_BOOL resultCode = FALSE;
-        hr = XMLDocument->loadXML(bstrValue, &resultCode);
-        if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
-        {
-            throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
-        }
+std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
+{
+    auto XMLDocument{create_xml_document()};
 
-        // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
-        hr = XMLDocument->selectNodes(bstr_t(L"//error"), &XMLNodeList);
+    const std::wstring &string = Encoding::toUnicode(xml);
+    BSTR bstrValue(bstr_t(string.c_str()));
+
+    VARIANT_BOOL resultCode = FALSE;
+    HRESULT hr = XMLDocument->loadXML(bstrValue, &resultCode);
+    if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
+    {
+        throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
+    }
+
+    // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
+    std::unique_ptr<IXMLDOMNodeList, Destroyer<IXMLDOMNodeList>> XMLNodeList;
+    {
+        IXMLDOMNodeList *tmp = nullptr;
+        hr = XMLDocument->selectNodes(bstr_t(L"//error"), &tmp);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //error");
         }
+        XMLNodeList.reset(tmp);
+    }
 
-        //Why do we need unlength if we're using nextNode?
-        LONG uLength;
+    std::vector<XmlParser::Error> errors;
 
-        hr = XMLNodeList->get_length(&uLength);
+    //Why do we need unlength if we're using nextNode?
+    LONG uLength;
+    hr = XMLNodeList->get_length(&uLength);
+    if (!SUCCEEDED(hr))
+    {
+        throw ::Linter::Exception("Linter: Can't get XPath //error length");
+    }
+    for (int iIndex = 0; iIndex < uLength; iIndex++)
+    {
+        IXMLDOMNode *node;
+        hr = XMLNodeList->nextNode(&node);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't get XPath //error length");
+            throw ::Linter::Exception("Linter: Can't get next XPath element");
         }
-        for (int iIndex = 0; iIndex < uLength; iIndex++)
-        {
-            IXMLDOMNode *node;
-            hr = XMLNodeList->nextNode(&node);
-            if (!SUCCEEDED(hr))
-            {
-                throw ::Linter::Exception("Linter: Can't get next XPath element");
-            }
-            CComQIPtr<IXMLDOMElement> element(node);
-            if (!SUCCEEDED(hr) && element)
-            {
-                throw ::Linter::Exception("Linter: XPath Element error");
-            }
-            Error error;
-            CComVariant value;
 
-            element->getAttribute(bstr_t(L"line"), &value);
-            error.m_line = _wtoi(value.bstrVal);
+        CComQIPtr<IXMLDOMElement> element(node);
+        Error error;
+        CComVariant value;
 
-            element->getAttribute(bstr_t(L"column"), &value);
-            error.m_column = _wtoi(value.bstrVal);
+        element->getAttribute(bstr_t(L"line"), &value);
+        error.m_line = _wtoi(value.bstrVal);
 
-            element->getAttribute(bstr_t(L"message"), &value);
-            error.m_message = value.bstrVal;
+        element->getAttribute(bstr_t(L"column"), &value);
+        error.m_column = _wtoi(value.bstrVal);
 
-            errors.push_back(error);
-            RELEASE(node);
-        }
-        RELEASE(XMLNodeList);
-        RELEASE(XMLDocument);
-    }
-    catch (std::exception const &)
-    {
-        RELEASE(XMLDocument);
-        RELEASE(XMLNodeList);
+        element->getAttribute(bstr_t(L"message"), &value);
+        error.m_message = value.bstrVal;
 
-        throw;
+        errors.push_back(error);
+        RELEASE(node);
     }
 
     return errors;
@@ -104,33 +124,22 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
 {
     XmlParser::Settings settings;
     IXMLDOMNodeList *XMLNodeList(NULL), *styleNode(NULL);
-    IXMLDOMDocument2 *XMLDocument(NULL);
     HRESULT hr;
     LONG uLength;
 
     try
     {
-        hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)(&XMLDocument));
-        if (!SUCCEEDED(hr) || !XMLDocument)
-        {
-            throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
-        }
-
-        hr = XMLDocument->put_async(VARIANT_FALSE);
-        if (!SUCCEEDED(hr))
-        {
-            throw ::Linter::Exception("Linter: XMLDOMDocument2::put_async error.");
-        }
+        auto XMLDocument{create_xml_document()};
 
         BSTR bstrValue(bstr_t(file.c_str()));
+        //This is different. There's a CComVariant round this and it uses load.
         CComVariant value(bstrValue);
 
-            VARIANT_BOOL resultCode = FALSE;
-            hr = XMLDocument->load(value, &resultCode);
-            if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
-            {
-                throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
-            }
+        VARIANT_BOOL resultCode = FALSE;
+        hr = XMLDocument->load(value, &resultCode);
+        if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
+        {
+            throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
         }
 
         hr = XMLDocument->selectNodes(bstr_t(L"//style"), &styleNode);
@@ -213,25 +222,23 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                 Linter linter;
                 CComVariant extension;
 
-                    element->getAttribute(bstr_t(L"extension"), &extension);
-                    linter.m_extension = extension.bstrVal;
+                element->getAttribute(bstr_t(L"extension"), &extension);
+                linter.m_extension = extension.bstrVal;
 
-                    element->getAttribute(bstr_t(L"command"), &extension);
-                    linter.m_command = extension.bstrVal;
+                element->getAttribute(bstr_t(L"command"), &extension);
+                linter.m_command = extension.bstrVal;
 
-                    element->getAttribute(bstr_t(L"stdin"), &extension);
-                    linter.m_useStdin = !!extension.boolVal;
+                element->getAttribute(bstr_t(L"stdin"), &extension);
+                linter.m_useStdin = !!extension.boolVal;
 
                 settings.m_linters.push_back(linter);
                 RELEASE(node);
             }
         }
         RELEASE(XMLNodeList);
-        RELEASE(XMLDocument);
     }
     catch (std::exception const &)
     {
-        RELEASE(XMLDocument);
         RELEASE(XMLNodeList);
         throw;
     }
