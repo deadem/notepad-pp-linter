@@ -141,7 +141,7 @@ unsigned int __stdcall AsyncCheck(void *)
             catch (std::exception const &e)
             {
                 std::string str(e.what());
-                showTooltip(L"Failed to run command:" + std::wstring(str.begin(), str.end()));
+                showTooltip(L"Failed to run command: " + std::wstring(str.begin(), str.end()));
             }
         }
     }

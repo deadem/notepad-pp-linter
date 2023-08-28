@@ -28,14 +28,49 @@ namespace
         }
     };
 
-    /** It is slightly annoying that there is a wodge of common code for dealing with XML, and the only difference
-     * is whether it loads from a string or a file.
-     *
-     * Should possibly pass a lambda
-     */
-    std::unique_ptr<IXMLDOMDocument2, Destroyer<IXMLDOMDocument2>> create_xml_document()
+    class XML_Document
     {
-        std::unique_ptr<IXMLDOMDocument2, Destroyer<IXMLDOMDocument2>> XMLDocument;
+      public:
+        /** Creates an XML document from the supplied filename */
+        explicit XML_Document(std::wstring const &filename)
+        {
+            create_xml_doc_obj();
+
+            BSTR bstrValue{bstr_t(filename.c_str())};
+            CComVariant value(bstrValue);
+
+            VARIANT_BOOL resultCode = FALSE;
+            HRESULT hr = document_->load(value, &resultCode);
+
+            check_load_results(resultCode, hr);
+        }
+
+        /** Creates an XML document from the supplied UTF8 string */
+        explicit XML_Document(std::string const &xml)
+        {
+            create_xml_doc_obj();
+
+            std::wstring string = Encoding::toUnicode(xml);
+            BSTR bstrValue{(bstr_t(string.c_str()))};
+
+            VARIANT_BOOL resultCode = FALSE;
+            HRESULT hr = document_->loadXML(bstrValue, &resultCode);
+
+            check_load_results(resultCode, hr);
+        }
+
+        ~XML_Document()
+        {
+        }
+
+        //Klunky? Remove it
+        IXMLDOMDocument2 *operator->()
+        {
+            return document_.get();
+        }
+
+      private:
+        void create_xml_doc_obj()
         {
             IXMLDOMDocument2 *tmp = nullptr;
             HRESULT hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)&tmp);
@@ -43,38 +78,62 @@ namespace
             {
                 throw ::Linter::SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
             }
-            XMLDocument.reset(tmp);
+            document_.reset(tmp);
+
+            hr = document_->put_async(VARIANT_FALSE);
+            if (!SUCCEEDED(hr))
+            {
+                throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
+            }
         }
 
-        HRESULT hr = XMLDocument->put_async(VARIANT_FALSE);
-        if (!SUCCEEDED(hr))
+        void check_load_results(VARIANT_BOOL resultcode, HRESULT hr)
         {
-            throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
+            if (!SUCCEEDED(hr))
+            {
+                throw ::Linter::SystemError(hr);
+            }
+            if (resultcode != VARIANT_TRUE)
+            {
+                CComPtr<IXMLDOMParseError> error;
+                (void)document_->get_parseError(&error);
+
+                if (error)
+                {
+                    BSTR reason;
+                    error->get_reason(&reason);
+                    long line;
+                    error->get_line(&line);
+                    long column;
+                    error->get_linepos(&column);
+                    char buff[256];
+                    std::snprintf(buff,
+                        sizeof(buff),
+                        "Invalid XML in linter.xml at line %d col %d: %s",
+                        line,
+                        column,
+                        static_cast<std::string>(static_cast<bstr_t>(reason)).c_str());
+                    throw std::runtime_error(buff);
+                }
+            }
         }
-        return XMLDocument;
-    }
+
+        //Replace this once I have moved selectnodes into here
+        std::unique_ptr<IXMLDOMDocument2, Destroyer<IXMLDOMDocument2>> document_;
+        //CComPtr<IXMLDOMDocument2> document_;
+    };
 
 }    // namespace
 
 std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 {
-    auto XMLDocument{create_xml_document()};
-
-    const std::wstring &string = Encoding::toUnicode(xml);
-    BSTR bstrValue(bstr_t(string.c_str()));
-
-    VARIANT_BOOL resultCode = FALSE;
-    HRESULT hr = XMLDocument->loadXML(bstrValue, &resultCode);
-    if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
-    {
-        throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
-    }
+    XML_Document XMLDocument{xml};
 
     // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
     std::unique_ptr<IXMLDOMNodeList, Destroyer<IXMLDOMNodeList>> XMLNodeList;
     {
         IXMLDOMNodeList *tmp = nullptr;
-        hr = XMLDocument->selectNodes(bstr_t(L"//error"), &tmp);
+        HRESULT hr = XMLDocument->selectNodes(bstr_t(L"//error"), &tmp);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //error");
@@ -86,7 +145,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 
     //Why do we need unlength if we're using nextNode?
     LONG uLength;
-    hr = XMLNodeList->get_length(&uLength);
+    HRESULT hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
         throw ::Linter::Exception("Linter: Can't get XPath //error length");
@@ -124,31 +183,19 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
 {
     XmlParser::Settings settings;
     IXMLDOMNodeList *XMLNodeList(NULL), *styleNode(NULL);
-    HRESULT hr;
-    LONG uLength;
 
     try
     {
-        auto XMLDocument{create_xml_document()};
+        XML_Document XMLDocument(file);
 
-        BSTR bstrValue(bstr_t(file.c_str()));
-        //This is different. There's a CComVariant round this and it uses load.
-        CComVariant value(bstrValue);
-
-        VARIANT_BOOL resultCode = FALSE;
-        hr = XMLDocument->load(value, &resultCode);
-        if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
-        {
-            throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
-        }
-
-        hr = XMLDocument->selectNodes(bstr_t(L"//style"), &styleNode);
+        HRESULT hr = XMLDocument->selectNodes(bstr_t(L"//style"), &styleNode);
         if (!SUCCEEDED(hr))
         {
             throw ::Linter::Exception("Linter: Can't execute XPath //style");
         }
 
         //Why do we need to get the length if we're going to use nextNode?
+        LONG uLength;
         hr = styleNode->get_length(&uLength);
         if (!SUCCEEDED(hr))
         {

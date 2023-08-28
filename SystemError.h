@@ -68,6 +68,10 @@ namespace Linter
 
       private:
         char buff_[2048];
+
+#if __cplusplus >= 202002L
+        void add_location_to_message(std::source_location const &location);
+#endif
     };
 
 }    // namespace Linter
