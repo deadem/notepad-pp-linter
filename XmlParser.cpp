@@ -159,13 +159,13 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                 CComQIPtr<IXMLDOMElement> element(node);
 
                 CComVariant alpha;
-                if (SUCCEEDED(element->getAttribute(bstr_t(L"alpha"), &alpha)))
+                if (element->getAttribute(bstr_t(L"alpha"), &alpha) == S_OK)
                 {
                     std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     data >> settings.m_alpha;
                 }
 
-                if (SUCCEEDED(element->getAttribute(bstr_t(L"color"), &alpha)))
+                if (element->getAttribute(bstr_t(L"color"), &alpha) == S_OK)
                 {
                     std::wstringstream data(std::wstring(alpha.bstrVal ? alpha.bstrVal : L""));
                     unsigned int color(0);
