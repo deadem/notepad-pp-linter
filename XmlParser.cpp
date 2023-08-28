@@ -11,6 +11,8 @@
 #include <msxml6.h>
 #pragma comment(lib, "msxml6.lib")
 
+using Linter::SystemError;
+
 std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 {
     ::Linter::DomDocument XMLDocument;
@@ -27,7 +29,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
     HRESULT hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
-        throw ::Linter::SystemError(hr, "Linter: Can't get XPath //error length");
+        throw SystemError(hr, "Linter: Can't get XPath //error length");
     }
     for (int iIndex = 0; iIndex < uLength; iIndex++)
     {
@@ -35,7 +37,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         hr = XMLNodeList->nextNode(&node);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::SystemError(hr, "Linter: Can't get next XPath element");
+            throw SystemError(hr, "Linter: Can't get next XPath element");
         }
 
         CComQIPtr<IXMLDOMElement> element(node);
@@ -70,48 +72,49 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
     HRESULT hr = styleNode->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
-        throw ::Linter::SystemError(hr, "Linter: Can't get XPath root length");
+        throw SystemError(hr, "Linter: Can't get XPath style length");
     }
 
     if (uLength != 0)
     {
         CComPtr<IXMLDOMNode> node;
         hr = styleNode->nextNode(&node);
-        if (SUCCEEDED(hr))
+        if (!SUCCEEDED(hr))
         {
-            CComQIPtr<IXMLDOMElement> element(node);
-            CComVariant value;
-            if (element->getAttribute(bstr_t(L"alpha"), &value) == S_OK)
+            throw SystemError(hr, "Linter: Can't read style node");
+        }
+        CComQIPtr<IXMLDOMElement> element(node);
+        CComVariant value;
+        if (element->getAttribute(bstr_t(L"alpha"), &value) == S_OK)
+        {
+            int alpha = 0;
+            if (value.bstrVal)
             {
-                CComQIPtr<IXMLDOMElement> element(node);
+                std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
+                data >> alpha;
+            }
+            settings.m_alpha = alpha;
+        }
 
-                CComVariant alpha;
-                if (element->getAttribute(bstr_t(L"alpha"), &alpha) == S_OK)
-                {
-                    std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
-                    data >> alpha;
-                }
-                settings.m_alpha = alpha;
+        if (element->getAttribute(bstr_t(L"color"), &value) == S_OK)
+        {
+            unsigned int color(0);
+            if (value.bstrVal)
+            {
+                std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
+                data >> std::hex >> color;
             }
 
-            if (element->getAttribute(bstr_t(L"color"), &value) == S_OK)
-                if (value.bstrVal)
-                {
-                    std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
-                    data >> std::hex >> color;
-                }
+            // reverse colors for scintilla's LE order
+            settings.m_color = color & 0xFF;
 
-                // reverse colors for scintilla's LE order
-                settings.m_color = color & 0xFF;
+            settings.m_color <<= 8;
+            color >>= 8;
+            settings.m_color |= color & 0xFF;
 
-                settings.m_color <<= 8;
-                color >>= 8;
-                settings.m_color |= color & 0xFF;
-
-                settings.m_color <<= 8;
-                color >>= 8;
-                settings.m_color |= color & 0xFF;
-            }
+            settings.m_color <<= 8;
+            color >>= 8;
+            settings.m_color |= color & 0xFF;
         }
     }
 
@@ -122,7 +125,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
     hr = XMLNodeList->get_length(&uLength);
     if (!SUCCEEDED(hr))
     {
-        throw ::Linter::SystemError(hr, "Linter: Can't get XPath length");
+        throw SystemError(hr, "Linter: Can't get XPath length");
     }
 
     for (int iIndex = 0; iIndex < uLength; iIndex++)

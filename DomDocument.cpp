@@ -11,18 +11,16 @@ namespace Linter
 {
     DomDocument::DomDocument()
     {
-        IXMLDOMDocument2 *tmp = nullptr;
-        HRESULT hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)&tmp);
+        HRESULT hr = document_.CoCreateInstance(__uuidof(DOMDocument));
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
+            throw SystemError(hr, "Linter: Can't create IID_IXMLDOMDocument2");
         }
-        document_ = tmp;
 
         hr = document_->put_async(VARIANT_FALSE);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
+            throw SystemError("Linter: Can't XMLDOMDocument2::put_async");
         }
     }
 
@@ -57,7 +55,7 @@ namespace Linter
         HRESULT hr = document_->selectNodes(bstr_t(xpath.c_str()), &nodes);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::SystemError(hr, "Linter: Can't execute XPath " + xpath);
+            throw SystemError(hr, "Linter: Can't execute XPath " + xpath);
         }
         return nodes;
     }
@@ -66,7 +64,7 @@ namespace Linter
     {
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::SystemError(hr);
+            throw SystemError(hr);
         }
         if (resultcode != VARIANT_TRUE)
         {
