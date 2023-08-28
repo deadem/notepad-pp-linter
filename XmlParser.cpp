@@ -88,7 +88,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         {
             CComQIPtr<IXMLDOMElement> element(node);
             CComVariant value;
-            if (SUCCEEDED(element->getAttribute(bstr_t(L"alpha"), &value)))
+            if (element->getAttribute(bstr_t(L"alpha"), &value) == S_OK)
             {
                 CComQIPtr<IXMLDOMElement> element(node);
 
@@ -101,7 +101,8 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
                 settings.m_alpha = alpha;
             }
 
-                if (element->getAttribute(bstr_t(L"color"), &alpha) == S_OK)
+            if (element->getAttribute(bstr_t(L"color"), &value) == S_OK)
+                if (value.bstrVal)
                 {
                     std::wstringstream data{std::wstring(value.bstrVal, SysStringLen(value.bstrVal))};
                     data >> std::hex >> color;
