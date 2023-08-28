@@ -106,9 +106,12 @@ namespace Linter
     {
     }
 
+#if __cplusplus >= 202002L
     void SystemError::add_location_to_message(std::source_location const &location)
     {
         std::size_t const used{std::strlen(buff_)};
         std::snprintf(buff_ + used, sizeof(buff_) - used, " at %s %d", std::strrchr(location.file_name(), '\\') + 1, location.line());
     }
+#endif
+
 }    // namespace Linter

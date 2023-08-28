@@ -3,9 +3,12 @@
 
 #include "SystemError.h"
 
+#include <stdexcept>
+
+#pragma comment(lib, "msxml6.lib")
+
 namespace Linter
 {
-
     DomDocument::DomDocument()
     {
         IXMLDOMDocument2 *tmp = nullptr;
@@ -40,7 +43,6 @@ namespace Linter
 
     void DomDocument::load_from_string(std::string const &xml)
     {
-        //std::wstring string = Encoding::toUnicode(xml);
         BSTR bstrValue{(bstr_t(xml.c_str()))};
 
         VARIANT_BOOL resultCode = FALSE;
@@ -51,6 +53,17 @@ namespace Linter
 
     DomDocument::~DomDocument()
     {
+    }
+
+    CComPtr<IXMLDOMNodeList> DomDocument::get_nodelist(std::string const &xpath)
+    {
+        CComPtr<IXMLDOMNodeList> nodes;
+        HRESULT hr = document_->selectNodes(bstr_t(xpath.c_str()), &nodes);
+        if (!SUCCEEDED(hr))
+        {
+            throw ::Linter::SystemError(hr, "Linter: Can't execute XPath " + xpath);
+        }
+        return nodes;
     }
 
     void DomDocument::check_load_results(VARIANT_BOOL resultcode, HRESULT hr)

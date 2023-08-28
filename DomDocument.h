@@ -38,6 +38,8 @@ namespace Linter
             return document_.get();
         }
 
+        CComPtr<IXMLDOMNodeList> get_nodelist(std::string const &xpath);
+
       private:
         void check_load_results(VARIANT_BOOL resultcode, HRESULT hr);
 
