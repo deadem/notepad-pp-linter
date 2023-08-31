@@ -14,9 +14,7 @@ using Linter::SystemError;
 
 std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 {
-    ::Linter::DomDocument XMLDocument;
-
-    XMLDocument.load_from_string(xml);
+    ::Linter::DomDocument XMLDocument(xml);
     // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
 
     std::vector<XmlParser::Error> errors;
@@ -61,9 +59,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
 XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
 {
     XmlParser::Settings settings;
-    ::Linter::DomDocument XMLDocument;
-
-    XMLDocument.load_from_file(file);
+    ::Linter::DomDocument XMLDocument(file);
     CComPtr<IXMLDOMNodeList> styleNode{XMLDocument.get_nodelist("//style")};
 
     //Why do we need to get the length if we're going to use nextNode?

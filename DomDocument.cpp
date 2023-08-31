@@ -11,23 +11,10 @@
 
 namespace Linter
 {
-    DomDocument::DomDocument()
+    DomDocument::DomDocument(std::wstring const &filename)
     {
-        HRESULT hr = document_.CoCreateInstance(__uuidof(DOMDocument));
-        if (!SUCCEEDED(hr))
-        {
-            throw SystemError(hr, "Can't create IID_IXMLDOMDocument2");
-        }
+        init();
 
-        hr = document_->put_async(VARIANT_FALSE);
-        if (!SUCCEEDED(hr))
-        {
-            throw SystemError("Can't XMLDOMDocument2::put_async");
-        }
-    }
-
-    void DomDocument::load_from_file(std::wstring const &filename)
-    {
         BSTR bstrValue{bstr_t(filename.c_str())};
         CComVariant value(bstrValue);
 
@@ -37,8 +24,10 @@ namespace Linter
         check_load_results(resultCode, hr, Encoding::toUTF(filename));
     }
 
-    void DomDocument::load_from_string(std::string const &xml)
+    DomDocument::DomDocument(std::string const &xml)
     {
+        init();
+
         BSTR bstrValue{(bstr_t(xml.c_str()))};
 
         VARIANT_BOOL resultCode = FALSE;
@@ -62,7 +51,22 @@ namespace Linter
         return nodes;
     }
 
-    void DomDocument::check_load_results(VARIANT_BOOL resultcode, HRESULT hr, std::string const & filename)
+    void DomDocument::init()
+    {
+        HRESULT hr = document_.CoCreateInstance(__uuidof(DOMDocument));
+        if (!SUCCEEDED(hr))
+        {
+            throw SystemError(hr, "Can't create IID_IXMLDOMDocument2");
+        }
+
+        hr = document_->put_async(VARIANT_FALSE);
+        if (!SUCCEEDED(hr))
+        {
+            throw SystemError(hr, "Can't XMLDOMDocument2::put_async");
+        }
+    }
+
+    void DomDocument::check_load_results(VARIANT_BOOL resultcode, HRESULT hr, std::string const &filename)
     {
         if (!SUCCEEDED(hr))
         {

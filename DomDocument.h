@@ -10,14 +10,16 @@ namespace Linter
 {
     class DomDocument
     {
+        /** Importamnt note:
+         * The wstring constructor takes a filename.
+         * The string constructor takes an xml string.
+         */
       public:
-        DomDocument();
-
         /** Creates an XML document from the supplied filename */
-        void load_from_file(std::wstring const &filename);
+        explicit DomDocument(std::wstring const &filename);
 
         /** Creates an XML document from the supplied UTF8 string */
-        void load_from_string(std::string const &xml);
+        explicit DomDocument(std::string const &xml);
 
         ~DomDocument();
 
@@ -25,6 +27,10 @@ namespace Linter
         CComPtr<IXMLDOMNodeList> get_nodelist(std::string const &xpath);
 
       private:
+        /** Set up the dom interface */
+        void init();
+
+        /* Check the result of doing a load, die if it didn't complete */
         void check_load_results(VARIANT_BOOL resultcode, HRESULT hr, std::string const & filename);
 
         CComPtr<IXMLDOMDocument2> document_;
