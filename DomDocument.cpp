@@ -88,9 +88,12 @@ namespace Linter
                 long column;
                 error->get_linepos(&column);
                 std::ostringstream buff;
-                buff << "Invalid XML in " << filename << " at line " << line << " col " << column << " (near "
-                     << static_cast<std::string>(static_cast<bstr_t>(text)) << "): " << 
-                    static_cast<std::string>(static_cast<bstr_t>(reason));
+                buff << "Invalid XML in " << filename << " at line " << line << " col " << column;
+                if (text != nullptr)
+                {
+                    buff << " (near " << static_cast<std::string>(static_cast<bstr_t>(text)) << ")";
+                }
+                buff << ": " << static_cast<std::string>(static_cast<bstr_t>(reason));
                 throw std::runtime_error(buff.str());
             }
         }
