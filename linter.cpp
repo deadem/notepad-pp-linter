@@ -105,15 +105,19 @@ unsigned int __stdcall AsyncCheck(void *)
         }
     }
 
-    if (!commands.empty())
+    if (commands.empty())
+    {
+        return 0;
+    }
+
+    try
     {
         const std::string &text = getDocumentText();
 
         File file(GetFilePart(NPPM_GETFILENAME), GetFilePart(NPPM_GETCURRENTDIRECTORY));
-        if (!useStdin && !file.write(text))
+        if (!useStdin)
         {
-            showTooltip(L"Temp file write error.");
-            return 0;
+            file.write(text);
         }
 
         for (const auto &command : commands)
@@ -125,12 +129,17 @@ unsigned int __stdcall AsyncCheck(void *)
                 std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
                 errors.insert(errors.end(), parseError.begin(), parseError.end());
             }
-            catch (Linter::Exception &e)
+            catch (std::exception const &e)
             {
                 std::string str(e.what());
                 showTooltip(std::wstring(str.begin(), str.end()));
             }
         }
+    }
+    catch (std::exception const &e)
+    {
+        std::string str(e.what());
+        showTooltip(std::wstring(str.begin(), str.end()));
     }
 
     return 0;

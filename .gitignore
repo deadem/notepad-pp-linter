@@ -6,3 +6,4 @@ ipch
 .vs/
 *.aps
 linter.vcxproj.user
+enc_temp_folder/

@@ -1,11 +1,16 @@
 #include "StdAfx.h"
 #include "file.h"
+
+#include "HandleWrapper.h"
+#include "SystemError.h"
+
 #include <codecvt>
+
+using ::Linter::HandleWrapper;
+using ::Linter::SystemError;
 
 std::string File::exec(std::wstring commandLine, const nonstd::optional<std::string> &str)
 {
-    std::string result;
-
     if (!m_file.empty())
     {
         commandLine += ' ';
@@ -14,33 +19,28 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
         commandLine += '"';
     }
 
-    PROCESS_INFORMATION procInfo = {0};
+    auto out_handles = HandleWrapper::create_pipe();
+    HandleWrapper &OUT_Rd{out_handles.first};
+    HandleWrapper &OUT_Wr{out_handles.second};
+
+    auto err_handles = HandleWrapper::create_pipe();
+    //HandleWrapper &ERR_Rd{err_handles.first}; //We don't use this?
+    HandleWrapper &ERR_Wr{err_handles.second};
+
+    auto in_handles = HandleWrapper::create_pipe();
+    HandleWrapper &IN_Wr{err_handles.first};
+    HandleWrapper &IN_Rd{err_handles.second};
+
     STARTUPINFO startInfo = {0};
-    BOOL isSuccess = FALSE;
-
-    HANDLE IN_Rd(0), IN_Wr(0), OUT_Rd(0), OUT_Wr(0), ERR_Rd(0), ERR_Wr(0);
-
-    SECURITY_ATTRIBUTES security;
-
-    security.nLength = sizeof(SECURITY_ATTRIBUTES);
-    security.bInheritHandle = TRUE;
-    security.lpSecurityDescriptor = NULL;
-
-    CreatePipe(&OUT_Rd, &OUT_Wr, &security, 0);
-    CreatePipe(&ERR_Rd, &ERR_Wr, &security, 0);
-    CreatePipe(&IN_Rd, &IN_Wr, &security, 0);
-
-    SetHandleInformation(OUT_Rd, HANDLE_FLAG_INHERIT, 0);
-    SetHandleInformation(ERR_Rd, HANDLE_FLAG_INHERIT, 0);
-    SetHandleInformation(IN_Wr, HANDLE_FLAG_INHERIT, 0);
-
     startInfo.cb = sizeof(STARTUPINFO);
     startInfo.hStdError = ERR_Wr;
     startInfo.hStdOutput = OUT_Wr;
     startInfo.hStdInput = IN_Rd;
     startInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-    isSuccess = CreateProcess(NULL,
+    PROCESS_INFORMATION procInfo = {0};
+
+    BOOL isSuccess = CreateProcess(NULL,
         const_cast<wchar_t *>(commandLine.c_str()),    // command line
         NULL,                                          // process security attributes
         NULL,                                          // primary thread security attributes
@@ -53,44 +53,30 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
     if (!isSuccess)
     {
+        DWORD const error{GetLastError()};
         std::string command{std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(commandLine)};
-
-        throw Linter::Exception("Linter: Can't execute command: " + command);
+        throw SystemError(error, "Can't execute command: " + command);
     }
 
     if (str.has_value())
     {
-        const std::string &value = str.value();
-        DWORD dwRead(static_cast<DWORD>(value.size())), dwWritten(0);
-        WriteFile(IN_Wr, value.c_str(), dwRead, &dwWritten, nullptr);
+        IN_Wr.write_string(str.value());
     }
 
+    //We need to close all the handles for this end otherwise strange things happen.
     CloseHandle(procInfo.hProcess);
     CloseHandle(procInfo.hThread);
 
-    CloseHandle(ERR_Wr);
-    CloseHandle(OUT_Wr);
-    CloseHandle(IN_Wr);
+    OUT_Wr.close();
+    ERR_Wr.close();
+    IN_Wr.close();
 
-    DWORD readBytes;
-    std::string buffer;
-    buffer.resize(4096);
-
-    for (;;)
-    {
-        isSuccess = ReadFile(OUT_Rd, &buffer[0], static_cast<DWORD>(buffer.size()), &readBytes, NULL);
-        if (!isSuccess || readBytes == 0)
-        {
-            break;
-        }
-
-        result += std::string(&buffer[0], readBytes);
-    }
-
-    return result;
+    return OUT_Rd.read_file();
 }
 
-File::File(const std::wstring &fileName, const std::wstring &directory) : m_fileName(fileName), m_directory(directory){};
+File::File(const std::wstring &fileName, const std::wstring &directory) : m_fileName(fileName), m_directory(directory)
+{
+}
 
 File::~File()
 {
@@ -100,27 +86,19 @@ File::~File()
     }
 }
 
-bool File::write(const std::string &data)
+void File::write(const std::string &data)
 {
     if (data.empty())
     {
-        return false;
+        return;
     }
 
     std::wstring tempFileName = m_directory + L"/" + m_fileName + L".temp.linter.file.tmp";
 
-    HANDLE fileHandle =
-        CreateFile(tempFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_TEMPORARY, NULL);
-    if (fileHandle == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
+    HandleWrapper fileHandle{
+        CreateFile(tempFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_TEMPORARY, NULL)};
 
-    DWORD bytes(0);
-    WriteFile(fileHandle, &data[0], static_cast<DWORD>(data.size() * sizeof(data[0])), &bytes, 0);
-    CloseHandle(fileHandle);
+    fileHandle.write_string(data);
 
     m_file = tempFileName;
-
-    return true;
 }
