@@ -171,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="encoding.cpp" />
     <ClCompile Include="file.cpp" />
+    <ClCompile Include="FilePipe.cpp" />
     <ClCompile Include="HandleWrapper.cpp" />
     <ClCompile Include="linter.cpp" />
     <ClCompile Include="plugin.cpp" />
@@ -186,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="encoding.h" />
     <ClInclude Include="file.h" />
+    <ClInclude Include="FilePipe.h" />
     <ClInclude Include="HandleWrapper.h" />
     <ClInclude Include="linter.h" />
     <ClInclude Include="notepad\menuCmdID.h" />

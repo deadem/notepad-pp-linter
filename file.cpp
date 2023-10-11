@@ -1,13 +1,12 @@
 #include "StdAfx.h"
 #include "file.h"
 
-#include "HandleWrapper.h"
+#include "FilePipe.h"
 #include "SystemError.h"
 
 #include <codecvt>
 
-using ::Linter::HandleWrapper;
-using ::Linter::SystemError;
+using namespace Linter;
 
 std::string File::exec(std::wstring commandLine, const nonstd::optional<std::string> &str)
 {
@@ -19,23 +18,15 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
         commandLine += '"';
     }
 
-    auto out_handles = HandleWrapper::create_pipe();
-    HandleWrapper &OUT_Rd{out_handles.first};
-    HandleWrapper &OUT_Wr{out_handles.second};
-
-    auto err_handles = HandleWrapper::create_pipe();
-    //HandleWrapper &ERR_Rd{err_handles.first}; //We don't use this?
-    HandleWrapper &ERR_Wr{err_handles.second};
-
-    auto in_handles = HandleWrapper::create_pipe();
-    HandleWrapper &IN_Wr{err_handles.first};
-    HandleWrapper &IN_Rd{err_handles.second};
+    const auto stdoutpipe = FilePipe::create();
+    const auto stderrpipe = FilePipe::create();
+    const auto stdinpipe = FilePipe::create();
 
     STARTUPINFO startInfo = {0};
     startInfo.cb = sizeof(STARTUPINFO);
-    startInfo.hStdError = ERR_Wr;
-    startInfo.hStdOutput = OUT_Wr;
-    startInfo.hStdInput = IN_Rd;
+    startInfo.hStdError = stderrpipe.m_writer;
+    startInfo.hStdOutput = stdoutpipe.m_writer;
+    startInfo.hStdInput = stdinpipe.m_reader;
     startInfo.dwFlags |= STARTF_USESTDHANDLES;
 
     PROCESS_INFORMATION procInfo = {0};
@@ -60,18 +51,18 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
 
     if (str.has_value())
     {
-        IN_Wr.write_string(str.value());
+        stdinpipe.m_writer.writeFile(str.value());
     }
 
     //We need to close all the handles for this end otherwise strange things happen.
     CloseHandle(procInfo.hProcess);
     CloseHandle(procInfo.hThread);
 
-    OUT_Wr.close();
-    ERR_Wr.close();
-    IN_Wr.close();
+    stdoutpipe.m_writer.close();
+    stderrpipe.m_writer.close();
+    stdinpipe.m_writer.close();
 
-    return OUT_Rd.read_file();
+    return stdoutpipe.m_reader.readFile();
 }
 
 File::File(const std::wstring &fileName, const std::wstring &directory) : m_fileName(fileName), m_directory(directory)
@@ -98,7 +89,7 @@ void File::write(const std::string &data)
     HandleWrapper fileHandle{
         CreateFile(tempFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_TEMPORARY, NULL)};
 
-    fileHandle.write_string(data);
+    fileHandle.writeFile(data);
 
     m_file = tempFileName;
 }

@@ -1,9 +1,6 @@
 #pragma once
 
 #include <string>
-#include <utility>
-
-#include <wtypes.h>
 
 namespace Linter
 {
@@ -11,37 +8,26 @@ namespace Linter
     {
       public:
         explicit HandleWrapper(HANDLE h);
-
         HandleWrapper(HandleWrapper const &) = delete;
-
         HandleWrapper(HandleWrapper &&other) noexcept;
-
         HandleWrapper &operator=(HandleWrapper const &) = delete;
-
         HandleWrapper &operator=(HandleWrapper &&other) = delete;
-
-        void close();
-
         ~HandleWrapper();
 
-        operator HANDLE() const noexcept
-        {
-            return m_handle;
-        }
+        void close() const;
+
+        operator HANDLE() const noexcept;
 
         /** Write a string to the handle
-         *
-         * @param str - string to write
-         */
-        void write_string(std::string const &str);
+        *
+        * @param str - string to write
+        */
+        void writeFile(std::string const &str) const;
 
         /** Read the entire file */
-        std::string read_file();
-
-        static std::pair<HandleWrapper, HandleWrapper> create_pipe();
+        std::string readFile() const;
 
       private:
-        HANDLE m_handle;
+        mutable HANDLE m_handle;
     };
-
 }    // namespace Linter
