@@ -194,6 +194,7 @@
     <ClInclude Include="notepad\Scintilla.h" />
     <ClInclude Include="plugin.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SourceLocation.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SystemError.h" />
     <ClInclude Include="targetver.h" />
