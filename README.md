@@ -28,7 +28,7 @@ Optional attribute `stdin`="1" can be used to lint from stdin instead of temp fi
   <linter stdin="1" extension=".js" command="C:\Users\deadem\AppData\Roaming\npm\eslint.cmd --stdin --format checkstyle"/>
 ```
 
-To deal with spaces in names, you need to use the &quot; quote character, viz:
+To handle spaces in names, you should use the &quot; quote character, as follows:
 
 ```xml
   <linter extension=".none" command="&quot;C:\a command with spaces\thing&quot; --stuff" />
