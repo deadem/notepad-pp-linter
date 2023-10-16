@@ -15,13 +15,13 @@ Linter::FilePipe::Pipe Linter::FilePipe::create()
     HANDLE child;
     if (!CreatePipe(&parent, &child, &security, 0))
     {
-        throw SystemError();
+        throw SystemError(GetLastError());
     }
 
     //Stop my handle being inherited by the child
     if (!SetHandleInformation(parent, HANDLE_FLAG_INHERIT, 0))
     {
-        throw SystemError();
+        throw SystemError(GetLastError());
     }
 
     return {HandleWrapper(parent), HandleWrapper(child)};

@@ -61,11 +61,18 @@ char const *Linter::SystemError::what() const noexcept
 
 void SystemError::addLocationToMessage(const SourceLocationCurrent &location)
 {
+    const char *fullPath = location.file_name();
+    if (fullPath == nullptr || fullPath[0] == 0)
+    {
+        return;
+    }
+
+    const char *fileName = std::strrchr(fullPath, '\\');
     const std::size_t used{std::strlen(m_buff)};
     std::snprintf(m_buff + used,
         sizeof(m_buff) - used,
         " at %s:%d %s",
-        std::strrchr(location.file_name(), '\\') + 1,
+        (fileName ? fileName + 1 : fullPath),
         location.line(),
         location.function_name());
 }

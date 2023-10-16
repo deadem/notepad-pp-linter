@@ -20,7 +20,7 @@ namespace Linter
             }
             const char *file_name() const noexcept
             {
-                return "unknown";
+                return "";
             }
             const char *function_name() const noexcept
             {

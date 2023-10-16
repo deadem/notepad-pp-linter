@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "XmlParser.h"
 #include "encoding.h"
+#include "SystemError.h"
 
 #include <msxml6.h>
 #pragma comment(lib, "msxml6.lib")
@@ -25,13 +26,13 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)(&XMLDocument));
         if (!SUCCEEDED(hr) || !XMLDocument)
         {
-            throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
+            throw ::Linter::SystemError("Linter: Can't create IID_IXMLDOMDocument2");
         }
 
         hr = XMLDocument->put_async(VARIANT_FALSE);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't XMLDOMDocument2::put_async");
+            throw ::Linter::SystemError("Linter: Can't XMLDOMDocument2::put_async");
         }
 
         const std::wstring &string = Encoding::toUnicode(xml);
@@ -41,21 +42,21 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         hr = XMLDocument->loadXML(bstrValue, &resultCode);
         if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
         {
-            throw ::Linter::Exception("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
+            throw ::Linter::SystemError("Linter: Invalid output format. Only checkstyle-compatible output allowed.");
         }
 
         // <error line="12" column="19" severity="error" message="Unexpected identifier" source="jscs" />
         hr = XMLDocument->selectNodes(bstr_t(L"//error"), &XMLNodeList);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't execute XPath //error");
+            throw ::Linter::SystemError("Linter: Can't execute XPath //error");
         }
         LONG uLength;
 
         hr = XMLNodeList->get_length(&uLength);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't get XPath //error length");
+            throw ::Linter::SystemError("Linter: Can't get XPath //error length");
         }
         for (int iIndex = 0; iIndex < uLength; iIndex++)
         {
@@ -63,12 +64,12 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
             hr = XMLNodeList->nextNode(&node);
             if (!SUCCEEDED(hr))
             {
-                throw ::Linter::Exception("Linter: Can't get next XPath element");
+                throw ::Linter::SystemError("Linter: Can't get next XPath element");
             }
             CComQIPtr<IXMLDOMElement> element(node);
             if (!SUCCEEDED(hr) && element)
             {
-                throw ::Linter::Exception("Linter: XPath Element error");
+                throw ::Linter::SystemError("Linter: XPath Element error");
             }
             Error error;
             CComVariant value;
@@ -88,7 +89,7 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         RELEASE(XMLNodeList);
         RELEASE(XMLDocument);
     }
-    catch (::Linter::Exception &)
+    catch (::Linter::SystemError &)
     {
         RELEASE(XMLNode);
         RELEASE(XMLDocument);
@@ -120,13 +121,13 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_SERVER, IID_IXMLDOMDocument2, (LPVOID *)(&XMLDocument));
         if (!SUCCEEDED(hr) || !XMLDocument)
         {
-            throw ::Linter::Exception("Linter: Can't create IID_IXMLDOMDocument2");
+            throw ::Linter::SystemError("Linter: Can't create IID_IXMLDOMDocument2");
         }
 
         hr = XMLDocument->put_async(VARIANT_FALSE);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: XMLDOMDocument2::put_async error.");
+            throw ::Linter::SystemError("Linter: XMLDOMDocument2::put_async error.");
         }
 
         BSTR bstrValue(bstr_t(file.c_str()));
@@ -136,19 +137,19 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         hr = XMLDocument->load(value, &resultCode);
         if (!SUCCEEDED(hr) || (resultCode != VARIANT_TRUE))
         {
-            throw ::Linter::Exception("Linter: linter.xml load error. Check file format.");
+            throw ::Linter::SystemError("Linter: linter.xml load error. Check file format.");
         }
 
         hr = XMLDocument->selectNodes(bstr_t(L"//style"), &styleNode);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't execute XPath //style");
+            throw ::Linter::SystemError("Linter: Can't execute XPath //style");
         }
 
         hr = styleNode->get_length(&uLength);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't get XPath root length");
+            throw ::Linter::SystemError("Linter: Can't get XPath root length");
         }
         else if (uLength)
         {
@@ -189,13 +190,13 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         hr = XMLDocument->selectNodes(bstr_t(L"//linter"), &XMLNodeList);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't execute XPath //linter");
+            throw ::Linter::SystemError("Linter: Can't execute XPath //linter");
         }
 
         hr = XMLNodeList->get_length(&uLength);
         if (!SUCCEEDED(hr))
         {
-            throw ::Linter::Exception("Linter: Can't get XPath length");
+            throw ::Linter::SystemError("Linter: Can't get XPath length");
         }
 
         for (int iIndex = 0; iIndex < uLength; iIndex++)
@@ -227,7 +228,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring file)
         RELEASE(XMLNodeList);
         RELEASE(XMLDocument);
     }
-    catch (::Linter::Exception &)
+    catch (::Linter::SystemError &)
     {
         RELEASE(XMLNode);
         RELEASE(XMLDocument);

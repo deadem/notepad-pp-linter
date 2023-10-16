@@ -4,6 +4,7 @@
 #include "XmlParser.h"
 #include "encoding.h"
 #include "file.h"
+#include "SystemError.h"
 
 #include <CommCtrl.h>
 #include <vector>
@@ -123,20 +124,13 @@ unsigned int __stdcall AsyncCheck(void *)
         for (const auto &command : commands)
         {
             //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-            try
-            {
-                std::string xml = file.exec(command.first, command.second ? text : std::string());
-                std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-                errors.insert(errors.end(), parseError.begin(), parseError.end());
-            }
-            catch (std::exception const &e)
-            {
-                std::string str(e.what());
-                showTooltip(std::wstring(str.begin(), str.end()));
-            }
+
+            std::string xml = file.exec(command.first, command.second ? text : std::string());
+            std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+            errors.insert(errors.end(), parseError.begin(), parseError.end());
         }
     }
-    catch (std::exception const &e)
+    catch (const Linter::SystemError &e)
     {
         std::string str(e.what());
         showTooltip(std::wstring(str.begin(), str.end()));
@@ -199,7 +193,7 @@ void initLinters()
             showTooltip(L"Linter: Empty linters.xml.");
         }
     }
-    catch (Linter::Exception &e)
+    catch (const Linter::SystemError &e)
     {
         std::string str(e.what());
         showTooltip(std::wstring(str.begin(), str.end()));
