@@ -18,11 +18,13 @@ Linter::FilePipe::Pipe Linter::FilePipe::create()
         throw SystemError(GetLastError());
     }
 
-    //Stop my handle being inherited by the child
-    if (!SetHandleInformation(parent, HANDLE_FLAG_INHERIT, 0))
+    return {HandleWrapper(parent), HandleWrapper(child)};
+}
+
+void Linter::FilePipe::detachFromParent(const HandleWrapper &handle)
+{
+    if (!SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0))
     {
         throw SystemError(GetLastError());
     }
-
-    return {HandleWrapper(parent), HandleWrapper(child)};
 }

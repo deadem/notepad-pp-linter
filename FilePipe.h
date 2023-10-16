@@ -14,5 +14,6 @@ namespace Linter
         };
 
         static Pipe create();
+        static void detachFromParent(const HandleWrapper &handle);
     };
 }    // namespace Linter

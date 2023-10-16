@@ -22,6 +22,11 @@ std::string File::exec(std::wstring commandLine, const nonstd::optional<std::str
     const auto stderrpipe = FilePipe::create();
     const auto stdinpipe = FilePipe::create();
 
+    //Stop my handle being inherited by the child
+    FilePipe::detachFromParent(stdoutpipe.m_reader);
+    FilePipe::detachFromParent(stderrpipe.m_reader);
+    FilePipe::detachFromParent(stdinpipe.m_writer);
+
     STARTUPINFO startInfo = {0};
     startInfo.cb = sizeof(STARTUPINFO);
     startInfo.hStdError = stderrpipe.m_writer;
@@ -84,7 +89,7 @@ void File::write(const std::string &data)
         return;
     }
 
-    std::wstring tempFileName = m_directory + L"/" + m_fileName + L".temp.linter.file.tmp";
+    const std::wstring tempFileName = m_directory + L"/" + m_fileName + L".temp.linter.file.tmp";
 
     HandleWrapper fileHandle{
         CreateFile(tempFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_TEMPORARY, NULL)};
