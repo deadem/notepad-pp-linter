@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "plugin.h"
 #include "linter.h"
+
+#include "plugin.h"
 #include "XmlParser.h"
 #include "encoding.h"
 #include "file.h"
@@ -60,7 +61,7 @@ std::wstring GetFilePart(unsigned int part)
 
 void showTooltip(std::wstring message = std::wstring())
 {
-    const int position = static_cast<int>(SendEditor(static_cast<UINT>(SCI_GETCURRENTPOS)));
+    const LRESULT position = SendEditor(SCI_GETCURRENTPOS);
 
     HWND main = GetParent(getScintillaWindow());
     HWND childHandle = FindWindowEx(main, NULL, L"msctls_statusbar32", NULL);
@@ -124,14 +125,28 @@ unsigned int __stdcall AsyncCheck(void *)
         for (const auto &command : commands)
         {
             //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-
-            std::string xml = file.exec(command.first, command.second ? text : std::string());
-            std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-            errors.insert(errors.end(), parseError.begin(), parseError.end());
+            try
+            {
+                nonstd::optional<std::string> str;
+                if (command.second)
+                {
+                    str = text;
+                }
+                std::string xml = file.exec(command.first, str);
+                std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+                errors.insert(errors.end(), parseError.begin(), parseError.end());
+            }
+            catch (const std::exception &e)
+            {
+                //If we get an error running a command, log it, but carry on with the next command.
+                std::string str(e.what());
+                showTooltip(std::wstring(str.begin(), str.end()));
+            }
         }
     }
-    catch (const Linter::SystemError &e)
+    catch (const std::exception &e)
     {
+        //It is likely we got an error writing the text file, 
         std::string str(e.what());
         showTooltip(std::wstring(str.begin(), str.end()));
     }
@@ -193,7 +208,7 @@ void initLinters()
             showTooltip(L"Linter: Empty linters.xml.");
         }
     }
-    catch (const Linter::SystemError &e)
+    catch (std::exception const &e)
     {
         std::string str(e.what());
         showTooltip(std::wstring(str.begin(), str.end()));
@@ -255,6 +270,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             isBufferChanged = true;
             Check();
             break;
+
         case SCN_MODIFIED:
             if (notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT))
             {
@@ -272,9 +288,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             //OutputDebugString(debug);
         }
         break;
+
         case SCN_UPDATEUI:
             showTooltip();
             break;
+
         case SCN_PAINTED:
         case SCN_FOCUSIN:
         case SCN_FOCUSOUT:
