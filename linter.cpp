@@ -90,10 +90,8 @@ void showTooltip(std::wstring message = std::wstring())
     }
 }
 
-unsigned int __stdcall AsyncCheck(void *)
+void apply_linters()
 {
-    (void)CoInitialize(NULL);
-
     errors.clear();
 
     std::vector<std::pair<std::wstring, bool>> commands;
@@ -109,44 +107,49 @@ unsigned int __stdcall AsyncCheck(void *)
 
     if (commands.empty())
     {
-        return 0;
+        return;
     }
 
+    const std::string &text = getDocumentText();
+
+    File file(GetFilePart(NPPM_GETFILENAME), GetFilePart(NPPM_GETCURRENTDIRECTORY));
+    if (!useStdin)
+    {
+        file.write(text);
+    }
+
+    for (const auto &command : commands)
+    {
+        //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
+        try
+        {
+            nonstd::optional<std::string> str;
+            if (command.second)
+            {
+                str = text;
+            }
+            std::string xml = file.exec(command.first, str);
+            std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
+            errors.insert(errors.end(), parseError.begin(), parseError.end());
+        }
+        catch (const std::exception &e)
+        {
+            //If we get an error running a command, log it, but carry on with the next command.
+            std::string str(e.what());
+            showTooltip(std::wstring(str.begin(), str.end()));
+        }
+    }
+}
+
+unsigned int __stdcall AsyncCheck(void *)
+{
+    (void)CoInitialize(NULL);
     try
     {
-        const std::string &text = getDocumentText();
-
-        File file(GetFilePart(NPPM_GETFILENAME), GetFilePart(NPPM_GETCURRENTDIRECTORY));
-        if (!useStdin)
-        {
-            file.write(text);
-        }
-
-        for (const auto &command : commands)
-        {
-            //std::string xml = File::exec(L"C:\\Users\\deadem\\AppData\\Roaming\\npm\\jscs.cmd --reporter=checkstyle ", file);
-            try
-            {
-                nonstd::optional<std::string> str;
-                if (command.second)
-                {
-                    str = text;
-                }
-                std::string xml = file.exec(command.first, str);
-                std::vector<XmlParser::Error> parseError = XmlParser::getErrors(xml);
-                errors.insert(errors.end(), parseError.begin(), parseError.end());
-            }
-            catch (const std::exception &e)
-            {
-                //If we get an error running a command, log it, but carry on with the next command.
-                std::string str(e.what());
-                showTooltip(std::wstring(str.begin(), str.end()));
-            }
-        }
+        apply_linters();
     }
     catch (const std::exception &e)
     {
-        //It is likely we got an error writing the text file, 
         std::string str(e.what());
         showTooltip(std::wstring(str.begin(), str.end()));
     }
