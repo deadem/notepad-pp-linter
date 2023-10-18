@@ -3,6 +3,7 @@
 
 #include "encoding.h"
 #include "SystemError.h"
+#include "XmlDecodeException.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -21,7 +22,7 @@ namespace Linter
         VARIANT_BOOL resultCode = FALSE;
         HRESULT hr = m_document->load(value, &resultCode);
 
-        checkLoadResults(resultCode, hr, Encoding::toUTF(filename));
+        checkLoadResults(resultCode, hr);
     }
 
     DomDocument::DomDocument(std::string const &xml)
@@ -33,7 +34,7 @@ namespace Linter
         VARIANT_BOOL resultCode = FALSE;
         HRESULT hr = m_document->loadXML(bstrValue, &resultCode);
 
-        checkLoadResults(resultCode, hr, "temporary linter output file");
+        checkLoadResults(resultCode, hr);
     }
 
     DomDocument::~DomDocument() = default;
@@ -64,7 +65,7 @@ namespace Linter
         }
     }
 
-    void DomDocument::checkLoadResults(VARIANT_BOOL resultcode, HRESULT hr, std::string const &filename)
+    void DomDocument::checkLoadResults(VARIANT_BOOL resultcode, HRESULT hr)
     {
         if (!SUCCEEDED(hr))
         {
@@ -74,26 +75,7 @@ namespace Linter
         {
             CComPtr<IXMLDOMParseError> error;
             (void)m_document->get_parseError(&error);
-
-            if (error)
-            {
-                BSTR text;
-                error->get_srcText(&text);
-                BSTR reason;
-                error->get_reason(&reason);
-                long line;
-                error->get_line(&line);
-                long column;
-                error->get_linepos(&column);
-                std::ostringstream buff;
-                buff << "Invalid XML in " << filename << " at line " << line << " col " << column;
-                if (text != nullptr)
-                {
-                    buff << " (near " << static_cast<std::string>(static_cast<bstr_t>(text)) << ")";
-                }
-                buff << ": " << static_cast<std::string>(static_cast<bstr_t>(reason));
-                throw std::runtime_error(buff.str());
-            }
+            throw XmlDecodeException(error);
         }
     }
 
