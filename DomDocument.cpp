@@ -5,8 +5,8 @@
 #include "SystemError.h"
 #include "XmlDecodeException.h"
 
-#include <sstream>
 #include <stdexcept>
+#include <sstream>
 
 #pragma comment(lib, "msxml6.lib")
 
