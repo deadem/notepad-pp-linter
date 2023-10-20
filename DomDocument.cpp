@@ -10,73 +10,69 @@
 
 #pragma comment(lib, "msxml6.lib")
 
-namespace Linter
+Linter::DomDocument::DomDocument(std::wstring const &filename)
 {
-    DomDocument::DomDocument(std::wstring const &filename)
+    init();
+
+    BSTR bstrValue{bstr_t(filename.c_str())};
+    CComVariant value(bstrValue);
+
+    VARIANT_BOOL resultCode = FALSE;
+    HRESULT hr = m_document->load(value, &resultCode);
+
+    checkLoadResults(resultCode, hr);
+}
+
+Linter::DomDocument::DomDocument(std::string const &xml)
+{
+    init();
+
+    BSTR bstrValue{(bstr_t(xml.c_str()))};
+
+    VARIANT_BOOL resultCode = FALSE;
+    HRESULT hr = m_document->loadXML(bstrValue, &resultCode);
+
+    checkLoadResults(resultCode, hr);
+}
+
+Linter::DomDocument::~DomDocument() = default;
+
+CComPtr<IXMLDOMNodeList> Linter::DomDocument::getNodeList(std::string const &xpath)
+{
+    CComPtr<IXMLDOMNodeList> nodes;
+    HRESULT hr = m_document->selectNodes(bstr_t(xpath.c_str()), &nodes);
+    if (!SUCCEEDED(hr))
     {
-        init();
+        throw SystemError(hr, "Can't execute XPath " + xpath);
+    }
+    return nodes;
+}
 
-        BSTR bstrValue{bstr_t(filename.c_str())};
-        CComVariant value(bstrValue);
-
-        VARIANT_BOOL resultCode = FALSE;
-        HRESULT hr = m_document->load(value, &resultCode);
-
-        checkLoadResults(resultCode, hr);
+void Linter::DomDocument::init()
+{
+    HRESULT hr = m_document.CoCreateInstance(__uuidof(DOMDocument));
+    if (!SUCCEEDED(hr))
+    {
+        throw SystemError(hr, "Can't create IID_IXMLDOMDocument2");
     }
 
-    DomDocument::DomDocument(std::string const &xml)
+    hr = m_document->put_async(VARIANT_FALSE);
+    if (!SUCCEEDED(hr))
     {
-        init();
-
-        BSTR bstrValue{(bstr_t(xml.c_str()))};
-
-        VARIANT_BOOL resultCode = FALSE;
-        HRESULT hr = m_document->loadXML(bstrValue, &resultCode);
-
-        checkLoadResults(resultCode, hr);
+        throw SystemError(hr, "Can't XMLDOMDocument2::put_async");
     }
+}
 
-    DomDocument::~DomDocument() = default;
-    
-    CComPtr<IXMLDOMNodeList> DomDocument::getNodeList(std::string const &xpath)
+void Linter::DomDocument::checkLoadResults(VARIANT_BOOL resultcode, HRESULT hr)
+{
+    if (!SUCCEEDED(hr))
     {
-        CComPtr<IXMLDOMNodeList> nodes;
-        HRESULT hr = m_document->selectNodes(bstr_t(xpath.c_str()), &nodes);
-        if (!SUCCEEDED(hr))
-        {
-            throw SystemError(hr, "Can't execute XPath " + xpath);
-        }
-        return nodes;
+        throw SystemError(hr);
     }
-
-    void DomDocument::init()
+    if (resultcode != VARIANT_TRUE)
     {
-        HRESULT hr = m_document.CoCreateInstance(__uuidof(DOMDocument));
-        if (!SUCCEEDED(hr))
-        {
-            throw SystemError(hr, "Can't create IID_IXMLDOMDocument2");
-        }
-
-        hr = m_document->put_async(VARIANT_FALSE);
-        if (!SUCCEEDED(hr))
-        {
-            throw SystemError(hr, "Can't XMLDOMDocument2::put_async");
-        }
+        CComPtr<IXMLDOMParseError> error;
+        (void)m_document->get_parseError(&error);
+        throw XmlDecodeException(error);
     }
-
-    void DomDocument::checkLoadResults(VARIANT_BOOL resultcode, HRESULT hr)
-    {
-        if (!SUCCEEDED(hr))
-        {
-            throw SystemError(hr);
-        }
-        if (resultcode != VARIANT_TRUE)
-        {
-            CComPtr<IXMLDOMParseError> error;
-            (void)m_document->get_parseError(&error);
-            throw XmlDecodeException(error);
-        }
-    }
-
-}    // namespace Linter
+}
