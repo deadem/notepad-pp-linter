@@ -14,7 +14,7 @@ Linter::DomDocument::DomDocument(std::wstring const &filename)
 {
     init();
 
-    BSTR bstrValue{bstr_t(filename.c_str())};
+    BSTR bstrValue{static_cast<_bstr_t>(filename.c_str())};
     CComVariant value(bstrValue);
 
     VARIANT_BOOL resultCode = FALSE;
@@ -27,10 +27,8 @@ Linter::DomDocument::DomDocument(std::string const &xml)
 {
     init();
 
-    BSTR bstrValue{(bstr_t(xml.c_str()))};
-
     VARIANT_BOOL resultCode = FALSE;
-    HRESULT hr = m_document->loadXML(bstrValue, &resultCode);
+    HRESULT hr = m_document->loadXML(static_cast<_bstr_t>(xml.c_str()), &resultCode);
 
     checkLoadResults(resultCode, hr);
 }
@@ -40,7 +38,7 @@ Linter::DomDocument::~DomDocument() = default;
 CComPtr<IXMLDOMNodeList> Linter::DomDocument::getNodeList(std::string const &xpath)
 {
     CComPtr<IXMLDOMNodeList> nodes;
-    HRESULT hr = m_document->selectNodes(bstr_t(xpath.c_str()), &nodes);
+    HRESULT hr = m_document->selectNodes(static_cast<_bstr_t>(xpath.c_str()), &nodes);
     if (!SUCCEEDED(hr))
     {
         throw SystemError(hr, "Can't execute XPath " + xpath);

@@ -117,7 +117,7 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 
 void commandMenuInit()
 {
-    setCommand(0, bstr_t(L"Edit config"), editConfig, NULL, false);
+    setCommand(0, L"Edit config", editConfig, NULL, false);
 }
 
 void commandMenuCleanUp()

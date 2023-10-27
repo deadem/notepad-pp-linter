@@ -20,7 +20,7 @@ Linter::XmlDecodeException::XmlDecodeException(IXMLDOMParseError *error)
     std::size_t pos = std::snprintf(m_buff,
         sizeof(m_buff),
         "Invalid xml in %s at line %ld col %ld",
-        url == nullptr ? "temporary linter output file" : static_cast<std::string>(static_cast<bstr_t>(url)).c_str(),
+        url == nullptr ? "temporary linter output file" : static_cast<char *>(static_cast<_bstr_t>(url)),
         m_line,
         m_column);
 
@@ -28,7 +28,7 @@ Linter::XmlDecodeException::XmlDecodeException(IXMLDOMParseError *error)
     error->get_srcText(&text);
     if (text != nullptr)
     {
-        pos += std::snprintf(m_buff + pos, sizeof(m_buff) - pos, " (near %s)", static_cast<std::string>(static_cast<bstr_t>(text)).c_str());
+        pos += std::snprintf(m_buff + pos, sizeof(m_buff) - pos, " (near %s)", static_cast<char *>(static_cast<_bstr_t>(text)));
     }
 
     long code;
@@ -36,7 +36,7 @@ Linter::XmlDecodeException::XmlDecodeException(IXMLDOMParseError *error)
     BSTR reason;
     error->get_reason(&reason);
     std::snprintf(
-        m_buff + pos, sizeof(m_buff) - pos, ": code %08lx %s", code, static_cast<std::string>(static_cast<bstr_t>(reason)).c_str());
+        m_buff + pos, sizeof(m_buff) - pos, ": code %08lx %s", code, static_cast<char *>(static_cast<_bstr_t>(reason)));
 }
 
 Linter::XmlDecodeException::~XmlDecodeException() = default;
