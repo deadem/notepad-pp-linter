@@ -39,6 +39,8 @@ Linter::XmlDecodeException::XmlDecodeException(IXMLDOMParseError *error)
         m_buff + pos, sizeof(m_buff) - pos, ": code %08lx %s", code, static_cast<char *>(static_cast<_bstr_t>(reason)));
 }
 
+Linter::XmlDecodeException::XmlDecodeException(XmlDecodeException &&) noexcept = default;
+
 Linter::XmlDecodeException::~XmlDecodeException() = default;
 
 char const *Linter::XmlDecodeException::what() const noexcept

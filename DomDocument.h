@@ -22,6 +22,11 @@ namespace Linter
         /** Creates an XML document from the supplied UTF8 string */
         explicit DomDocument(std::string const &xml);
 
+        DomDocument(DomDocument const &) = delete;
+        DomDocument(DomDocument &&) = delete;
+        DomDocument &operator=(DomDocument const &) = delete;
+        DomDocument &operator=(DomDocument &&) = delete;
+
         ~DomDocument();
 
         /** Get list of nodes selected by supplied XPATH */
