@@ -40,13 +40,13 @@ std::vector<XmlParser::Error> XmlParser::getErrors(const std::string &xml)
         Error error;
         CComVariant value;
 
-        element->getAttribute(L"line", &value);
+        element->getAttribute(bstr_t(L"line"), &value);
         error.m_line = std::stoi(value.bstrVal);
 
-        element->getAttribute(L"column", &value);
+        element->getAttribute(bstr_t(L"column"), &value);
         error.m_column = std::stoi(value.bstrVal);
 
-        element->getAttribute(L"message", &value);
+        element->getAttribute(bstr_t(L"message"), &value);
         error.m_message = value.bstrVal;
 
         errors.push_back(error);
@@ -78,7 +78,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
         }
         CComQIPtr<IXMLDOMElement> element(node);
         CComVariant value;
-        if (element->getAttribute(L"alpha", &value) == S_OK)
+        if (element->getAttribute(bstr_t(L"alpha"), &value) == S_OK)
         {
             int alpha = 0;
             if (value.bstrVal)
@@ -89,7 +89,7 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
             settings.m_alpha = alpha;
         }
 
-        if (element->getAttribute(L"color", &value) == S_OK)
+        if (element->getAttribute(bstr_t(L"color"), &value) == S_OK)
         {
             unsigned int color(0);
             if (value.bstrVal)
@@ -130,13 +130,13 @@ XmlParser::Settings XmlParser::getLinters(std::wstring const &file)
             Linter linter;
             CComVariant extension;
 
-            element->getAttribute(L"extension", &extension);
+            element->getAttribute(bstr_t(L"extension"), &extension);
             linter.m_extension = extension.bstrVal;
 
-            element->getAttribute(L"command", &extension);
+            element->getAttribute(bstr_t(L"command"), &extension);
             linter.m_command = extension.bstrVal;
 
-            element->getAttribute(L"stdin", &extension);
+            element->getAttribute(bstr_t(L"stdin"), &extension);
             linter.m_useStdin = !!extension.boolVal;
 
             settings.m_linters.push_back(linter);
