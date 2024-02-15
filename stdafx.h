@@ -20,6 +20,3 @@
 #include <atlstr.h>
 #include <ATLCom.h>
 #include <comdef.h>
-#include <exception>
-#include <string>
-#include <sstream>

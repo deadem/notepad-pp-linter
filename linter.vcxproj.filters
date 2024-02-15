@@ -3,7 +3,7 @@
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx;h;hpp</Extensions>
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
@@ -35,10 +35,16 @@
     <ClCompile Include="SystemError.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DomDocument.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="HandleWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FilePipe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XmlDecodeException.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -67,6 +73,9 @@
     <ClInclude Include="FilePipe.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="DomDocument.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="HandleWrapper.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -89,6 +98,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XmlDecodeException.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

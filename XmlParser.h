@@ -32,5 +32,5 @@ class XmlParser
     };
 
     static std::vector<Error> getErrors(const std::string &xml);
-    static Settings getLinters(std::wstring file);
+    static Settings getLinters(std::wstring const &file);
 };
